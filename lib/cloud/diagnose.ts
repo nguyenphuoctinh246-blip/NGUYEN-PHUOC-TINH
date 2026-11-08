@@ -50,7 +50,12 @@ export async function diagnose(rawUrl: string, key: string): Promise<Diagnosis> 
   try {
     const t = await call(url, key, "/rest/v1/transactions?select=id&limit=1");
     tables = t.status === 200;
-    checks.push(tables ? { label: "Đã có bảng dữ liệu (schema.sql đã chạy)", ok: true } : { label: "Chưa có bảng dữ liệu", ok: false, detail: "Mở Supabase → SQL Editor, dán toàn bộ file schema.sql và bấm Run, rồi bấm Kiểm tra lại." });
+    const missingTable = t.status === 404 || /PGRST205|42P01|does not exist|Could not find the table/i.test(JSON.stringify(t.body ?? {}));
+    checks.push(tables
+      ? { label: "Đã có bảng dữ liệu (schema.sql đã chạy)", ok: true }
+      : missingTable
+        ? { label: "Chưa có bảng dữ liệu", ok: false, detail: "Còn một bước: mở Supabase → SQL Editor → New query, dán toàn bộ file schema.sql, bấm Run (chờ chữ Success), rồi quay lại đây bấm Kiểm tra và kết nối lần nữa." }
+        : { label: "Không đọc được bảng dữ liệu", ok: false, detail: `Mã phản hồi ${t.status}${t.body && typeof t.body.message === "string" ? ": " + t.body.message : ""}. Hãy chạy lại schema.sql trong SQL Editor rồi thử lại.` });
   } catch { checks.push({ label: "Không đọc được bảng dữ liệu", ok: false }); }
   if (tables) {
     try {
