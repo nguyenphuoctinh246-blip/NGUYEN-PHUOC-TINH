@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+/* ── Design tokens (light) ── */
+:root {
+  color-scheme: light;
+  --bg: #f4f3ef;
+  --surface: #ffffff;
+  --surface-alt: #efeee9;
+  --surface-input: #f8f7f4;
+  --fg: #17170f;
+  --fg-2: #57564e;
+  --muted: #8a8980;
+  --line: #dddcd5;
+  --line-light: #eae9e4;
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.08);
+  --income: #059669;
+  --income-soft: rgba(5, 150, 105, 0.08);
+  --expense: #dc2626;
+  --expense-soft: rgba(220, 38, 38, 0.07);
+  --cat-1: #2a78d6; --cat-2: #eb6834; --cat-3: #1baf7a; --cat-4: #eda100;
+  --cat-5: #e87ba4; --cat-6: #008300; --cat-7: #6250d6; --cat-8: #e34948;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-pop: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Dark tokens ── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0e0e0c;
+    --surface: #1a1a17;
+    --surface-alt: #252420;
+    --surface-input: #1f1e1b;
+    --fg: #ebebdf;
+    --fg-2: #aead9f;
+    --muted: #777668;
+    --line: #32312b;
+    --line-light: #2a2924;
+    --accent: #5b8def;
+    --accent-soft: rgba(91, 141, 239, 0.1);
+    --income: #34d399;
+    --income-soft: rgba(52, 211, 153, 0.1);
+    --expense: #f87171;
+    --expense-soft: rgba(248, 113, 113, 0.08);
+    --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500;
+    --cat-5: #d55181; --cat-6: #008300; --cat-7: #9085e9; --cat-8: #e66767;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-pop: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e0e0c;
+  --surface: #1a1a17;
+  --surface-alt: #252420;
+  --surface-input: #1f1e1b;
+  --fg: #ebebdf;
+  --fg-2: #aead9f;
+  --muted: #777668;
+  --line: #32312b;
+  --line-light: #2a2924;
+  --accent: #5b8def;
+  --accent-soft: rgba(91, 141, 239, 0.1);
+  --income: #34d399;
+  --income-soft: rgba(52, 211, 153, 0.1);
+  --expense: #f87171;
+  --expense-soft: rgba(248, 113, 113, 0.08);
+  --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500;
+  --cat-5: #d55181; --cat-6: #008300; --cat-7: #9085e9; --cat-8: #e66767;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-pop: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Map tokens to Tailwind utilities: bg-surface, text-fg-2, border-line, … ── */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-surface-input: var(--surface-input);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-light: var(--line-light);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-income: var(--income);
+  --color-income-soft: var(--income-soft);
+  --color-expense: var(--expense);
+  --color-expense-soft: var(--expense-soft);
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+  --font-sans: var(--font-be-vietnam), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+}
+
+@theme {
+  --animate-pop: pop 0.15s ease-out;
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-fg font-sans antialiased;
+  }
+  input, select, textarea, button { font: inherit; }
+  :where(input, select, textarea):focus,
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+}
+
+@utility card {
+  @apply rounded-[14px] border border-line-light bg-surface shadow-card;
+}
+@utility card-title {
+  @apply m-0 text-sm font-semibold tracking-[0.01em] text-fg-2;
+}
+@utility input-field {
+  @apply w-full rounded-lg border border-line bg-surface-input px-3 py-2.5 text-sm text-fg transition-colors focus:border-accent;
+}
+@utility input-label {
+  @apply mb-1.5 block text-xs font-medium tracking-[0.02em] text-muted;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
