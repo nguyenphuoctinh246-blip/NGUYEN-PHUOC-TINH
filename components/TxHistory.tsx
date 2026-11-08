@@ -12,8 +12,6 @@ const TABS: [Tab, string][] = [
   ["income", "Thu nhập"],
 ];
 
-const monthText = (key: string) => `Tháng ${key.slice(5)}/${key.slice(0, 4)}`;
-
 export default function TxHistory({
   transactions,
   editingId,
@@ -26,23 +24,16 @@ export default function TxHistory({
   onDelete: (id: string) => void;
 }) {
   const [tab, setTab] = useState<Tab>("all");
-  const [month, setMonth] = useState("all");
   const [query, setQuery] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
-
-  const months = useMemo(
-    () => [...new Set(transactions.map((t) => t.date.slice(0, 7)))].sort().reverse(),
-    [transactions],
-  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return transactions
       .filter((t) => tab === "all" || t.type === tab)
-      .filter((t) => month === "all" || t.date.startsWith(month))
       .filter((t) => !q || `${catInfo(t.category).label} ${t.note}`.toLowerCase().includes(q))
       .sort((a, b) => b.date.localeCompare(a.date) || (b.id > a.id ? 1 : -1));
-  }, [transactions, tab, month, query]);
+  }, [transactions, tab, query]);
 
   const sum = filtered.reduce((s, t) => s + (t.type === "income" ? t.amount : -t.amount), 0);
 
@@ -79,12 +70,6 @@ export default function TxHistory({
       <div className="flex gap-2 border-b border-line-light px-4 py-2.5">
         <input type="search" aria-label="Tìm giao dịch" placeholder="Tìm theo danh mục, ghi chú…" value={query}
           onChange={(e) => setQuery(e.target.value)} className="input-field min-w-0 flex-1 !py-2 text-[13px]" />
-        <select aria-label="Lọc theo tháng" value={month} onChange={(e) => setMonth(e.target.value)} className="input-field !w-auto !py-2 text-[13px]">
-          <option value="all">Mọi tháng</option>
-          {months.map((m) => (
-            <option key={m} value={m}>{monthText(m)}</option>
-          ))}
-        </select>
       </div>
 
       {filtered.length === 0 ? (
@@ -134,7 +119,7 @@ export default function TxHistory({
       )}
 
       <div className="flex items-center justify-between border-t border-line-light bg-surface-alt px-4 py-2.5 text-[12px]">
-        <span className="font-medium text-fg-2">Chênh lệch thu − chi (đang lọc)</span>
+        <span className="font-medium text-fg-2">Chênh lệch thu − chi (trong kỳ đang xem)</span>
         <span className={`font-mono font-semibold ${sum >= 0 ? "text-income" : "text-expense"}`}>
           {(sum >= 0 ? "+" : "-") + fmt(Math.abs(sum))}đ
         </span>

@@ -30,7 +30,7 @@ export default function BalanceTrend({ transactions }: { transactions: Transacti
   return (
     <section className="card mb-5 px-4 py-[18px]">
       <div className="mb-2.5 flex items-center justify-between">
-        <h2 className="card-title">Biến động số dư</h2>
+        <h2 className="card-title">Biến động số dư trong kỳ</h2>
         <span className="font-mono text-[13px] font-semibold" style={{ color }}>
           {(final >= 0 ? "+" : "") + fmt(final)}đ
         </span>

@@ -2,7 +2,7 @@ import Icon, { type IconName } from "./Icon";
 
 const ITEMS: { icon: IconName; title: string; desc: string }[] = [
   { icon: "zap", title: "Ghi chép siêu nhanh", desc: "Nhập số tiền, chọn danh mục là xong. Không màn hình rườm rà, không bước thừa." },
-  { icon: "chart", title: "Biểu đồ trực quan", desc: "Thu chi theo tháng, phân bổ theo danh mục và biến động số dư hiển thị ngay khi bạn thêm giao dịch." },
+  { icon: "chart", title: "Biểu đồ trực quan", desc: "Chọn năm, tháng để xem thu chi từng kỳ, so sánh với kỳ trước, phân bổ theo danh mục và biến động số dư." },
   { icon: "layers", title: "Danh mục rõ ràng", desc: "5 nhóm thu nhập và 8 nhóm chi tiêu quen thuộc: ăn uống, đi lại, nhà cửa, giáo dục…" },
   { icon: "wallet", title: "Nắm số dư tức thì", desc: "Biết ngay mình còn bao nhiêu và đã chi bao nhiêu phần trăm thu nhập." },
   { icon: "shield", title: "Riêng tư tuyệt đối", desc: "Dữ liệu chỉ lưu trong trình duyệt của bạn, không máy chủ, không tài khoản, không theo dõi." },
