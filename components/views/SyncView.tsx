@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { VerifyRow } from "@/lib/cloud/engine";
 import { useApp } from "../app/AppContext";
 import Icon from "../Icon";
 import { Button, Card, Field, Pill } from "../ui";
 import DevicesCard from "./DevicesCard";
 import { ConnectForm, ConnectionCheck, ShareCard } from "./ConnectCard";
-import { runtimeConfigAllowed } from "@/lib/cloud/config";
+import { getCloudConfig, runtimeConfigAllowed } from "@/lib/cloud/config";
+import { deviceName } from "@/lib/cloud/device";
 
 function Setup() {
   return (
@@ -85,6 +86,24 @@ function Signed() {
   const [confirmOut, setConfirmOut] = useState(false);
   const [forget, setForget] = useState(false);
   const link = typeof window === "undefined" ? "" : window.location.href.split("#")[0];
+  const [reportCopied, setReportCopied] = useState(false);
+  const cfgNow = typeof window === "undefined" ? null : getCloudConfig();
+  const host = (() => { try { return cfgNow ? new URL(cfgNow.url).host : "–"; } catch { return cfgNow?.url ?? "–"; } })();
+  const localTx = s.tx.filter((t) => !t.isSample).length;
+  const diag: [string, string][] = [
+    ["Máy chủ", host],
+    ["Tài khoản", `${user?.email ?? "–"} · mã ${(user?.id ?? "").slice(0, 6)}`],
+    ["Thiết bị", `${deviceName()} · ${cloud.device.legacy ? "chưa bật duyệt thiết bị" : "đã được duyệt"}`],
+    ["Cập nhật tức thì", info.realtime ? "Đang hoạt động" : "Chưa hoạt động (vẫn tự đồng bộ mỗi 6 giây)"],
+    ["Lần cập nhật cuối", fmtTime(info.lastSync)],
+    ["Thay đổi chờ gửi", String(info.pending)],
+    ["Dữ liệu trên máy này", `${localTx} giao dịch`],
+    ...(rows ? rows.map((r): [string, string] => [`Trên tài khoản · ${r.label}`, `${r.remote} (máy này ${r.local})${r.onlyLocal || r.onlyRemote || r.different ? " · LỆCH" : ""}`]) : []),
+  ];
+  async function copyReport() {
+    const text = ["BÁO CÁO CHẨN ĐOÁN ĐỒNG BỘ", ...diag.map(([k, v]) => `${k}: ${v}`), `Trạng thái: ${statusText}`, info.message ? `Thông báo: ${info.message}` : ""].filter(Boolean).join("\n");
+    try { await navigator.clipboard.writeText(text); setReportCopied(true); setTimeout(() => setReportCopied(false), 1800); } catch { /* tự chép */ }
+  }
 
   async function check() {
     setChecking(true); setErr(""); setRows(null);
@@ -124,10 +143,14 @@ function Signed() {
       </section>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card title="Trạng thái" icon="cloud" color={10}>
+        <Card title="Chẩn đoán đồng bộ" icon="cloud" color={10}
+          action={<Button className="!py-1.5 text-xs" onClick={() => void copyReport()}><Icon name="copy" className="size-3.5" />{reportCopied ? "Đã chép" : "Chép báo cáo"}</Button>}>
           <div className="mb-2 flex items-center gap-2"><Pill tone={tone}>{statusText}</Pill></div>
-          {info.message && <p className="m-0 text-[13px] text-fg-2">{info.message}</p>}
-          <p className="mt-2 mb-0 text-xs text-muted">Thay đổi trên một thiết bị tự xuất hiện trên các thiết bị khác trong vài giây. Khi mất mạng, bạn vẫn nhập được; dữ liệu sẽ gửi lên khi có mạng lại.</p>
+          {info.message && <p className="mt-0 mb-2 text-[13px] text-expense">{info.message}</p>}
+          <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[13px]">
+            {diag.map(([k, v]) => (<Fragment key={k}><dt className="text-muted">{k}</dt><dd className="m-0 min-w-0 font-medium break-words">{v}</dd></Fragment>))}
+          </dl>
+          <p className="mt-3 mb-0 rounded-lg bg-surface-alt px-3 py-2 text-xs leading-relaxed text-fg-2"><b>Hai thiết bị cùng một nguồn dữ liệu</b> khi Máy chủ và Mã tài khoản ở hai máy giống hệt nhau. Nếu khác, một máy đang dùng dự án hoặc tài khoản khác.</p>
         </Card>
         <Card title="Dùng trên thiết bị khác" icon="list" color={7}>
           <p className="mt-0 mb-2 text-[13px] text-fg-2">Mở đường link dưới đây trên thiết bị khác và đăng nhập cùng email này:</p>

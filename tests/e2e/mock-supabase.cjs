@@ -108,10 +108,12 @@ http.createServer((req, res) => {
         if (req.method === 'GET' || req.method === 'HEAD') {
           const params = [];
           const w = where(u.query, params);
+          const om = /^(\w+)\.(asc|desc)$/.exec(String(u.query.order || ''));
+          const ord = om ? `order by "${om[1]}" ${om[2]}` : 'order by 1, 2';
           const off = +(u.query.offset || 0);
           const lim = u.query.limit ? +u.query.limit : 100000;
           const r = await asUser(claims || {}, async (c) => ({
-            rows: (await c.query(`select * from public.${t} ${w} order by 1, 2 offset ${off} limit ${lim}`, params)).rows,
+            rows: (await c.query(`select * from public.${t} ${w} ${ord} offset ${off} limit ${lim}`, params)).rows,
             total: +(await c.query(`select count(*) from public.${t} ${w}`, params)).rows[0].count,
           }), claims ? 'authenticated' : 'anon');
           return send(200, req.method === 'HEAD' ? undefined : r.rows, { 'content-range': `${r.rows.length ? off + '-' + (off + r.rows.length - 1) : '*'}/${r.total}` });

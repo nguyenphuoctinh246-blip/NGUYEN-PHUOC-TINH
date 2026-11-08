@@ -21,7 +21,7 @@ export default function SyncPill() {
   return (
     <button type="button" onClick={() => go("dong-bo")} title={user ? user.email ?? "" : "Đăng nhập để dùng trên nhiều thiết bị"}
       className={`flex h-9 cursor-pointer items-center gap-2 rounded-lg border-none px-3 text-xs font-semibold ${tone}`}>
-      <span className={`size-2 rounded-full ${dot}`} />{text}
+      <span className={`size-2 rounded-full ${dot}`} />{text}{user && cloud.device.status === "approved" && <span className="font-mono text-[10px] opacity-70">{user.id.slice(0, 4)}</span>}
     </button>
   );
 }

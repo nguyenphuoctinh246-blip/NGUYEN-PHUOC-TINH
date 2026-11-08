@@ -9,6 +9,7 @@ class FakeServer {
   tables: Record<string, Map<string, Row>> = {};
   clients: FakeClient[] = [];
   upsertCalls = 0;
+  log: string[] = [];
   failNextUpsert = 0;
   table(t: string) { return (this.tables[t] ??= new Map()); }
   key(r: Row) { return `${r.user_id}|${r.id}`; }
@@ -32,13 +33,13 @@ class FakeClient {
   }
   channel() {
     const self = this;
-    const ch = { on(_t: string, o: { event: string; table: string; filter?: string }, cb: (p: unknown) => void) { self.handlers.push({ table: o.table, event: o.event, filter: o.filter, cb }); return ch; }, subscribe() { return ch; } };
+    const ch = { on(_t: string, o: { event: string; table: string; filter?: string }, cb: (p: unknown) => void) { self.handlers.push({ table: o.table, event: o.event, filter: o.filter, cb }); return ch; }, subscribe(cb?: (s: string) => void) { if (cb) queueMicrotask(() => cb('SUBSCRIBED')); return ch; } };
     return ch;
   }
   removeChannel() { this.handlers = []; return Promise.resolve("ok"); }
   from(table: string) {
     const srv = this.srv;
-    const q = { filters: [] as ((r: Row) => boolean)[], range: null as [number, number] | null, op: "select", rows: [] as Row[], head: false, count: false };
+    const q = { filters: [] as ((r: Row) => boolean)[], range: null as [number, number] | null, op: "select", rows: [] as Row[], head: false, count: false, order: null as [string, boolean] | null, limit: null as number | null };
     const run = async (): Promise<{ data: Row[] | null; error: { message: string } | null; count?: number }> => {
       const t = srv.table(table);
       if (q.op === "upsert") {
@@ -54,9 +55,12 @@ class FakeClient {
         for (const [k, r] of [...t]) if (q.filters.every((f) => f(r))) { t.delete(k); srv.broadcast(table, "DELETE", null, r); }
         return { data: null, error: null };
       }
+      srv.log.push(q.limit !== null || q.head ? 'light:' + table : 'full:' + table);
       let data = [...t.values()].filter((r) => q.filters.every((f) => f(r)));
       const count = data.length;
+      if (q.order) { const [col, asc] = q.order; data.sort((a, b) => (String(a[col] ?? "") < String(b[col] ?? "") ? -1 : 1) * (asc ? 1 : -1)); }
       if (q.range) data = data.slice(q.range[0], q.range[1] + 1);
+      if (q.limit !== null) data = data.slice(0, q.limit);
       return { data: q.head ? null : data, error: null, count: q.count ? count : undefined };
     };
     const b: Record<string, unknown> = {
@@ -66,6 +70,8 @@ class FakeClient {
       eq: (c: string, v: unknown) => { q.filters.push((r) => r[c] === v); return b; },
       in: (c: string, v: unknown[]) => { q.filters.push((r) => v.includes(r[c])); return b; },
       range: (a: number, z: number) => { q.range = [a, z]; return b; },
+      order: (c: string, o?: { ascending?: boolean }) => { q.order = [c, o?.ascending !== false]; return b; },
+      limit: (n: number) => { q.limit = n; return b; },
       then: (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => run().then(res, rej),
     };
     return b;
@@ -78,7 +84,7 @@ const ok = (cond: boolean, msg: string) => { if (cond) console.log("  ✓", msg)
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 class Device {
-  store: Store; info: SyncInfo = { status: "idle", pending: 0, lastSync: null, message: "" };
+  store: Store; info: SyncInfo = { status: "idle", pending: 0, lastSync: null, message: "", realtime: false };
   engine: SyncEngine; client: FakeClient;
   saved: Snapshot | null = null;
   constructor(public name: string, srv: FakeServer, uid: string, initial: Store) {
@@ -212,6 +218,15 @@ const tx = (id: string, amount: number, extra: Partial<Transaction> = {}): Trans
   ok(vq.every((r) => r.onlyLocal === 0 && r.onlyRemote === 0 && r.different === 0), "sau pull hai bên khớp hoàn toàn");
   const calls0 = srv.upsertCalls; await P.engine.pull(); await Q.engine.pull(); await wait(40);
   ok(srv.upsertCalls === calls0, "pull khi không có thay đổi không ghi thừa lên máy chủ");
+  // pull thông minh: không có thay đổi thì không tải lại toàn bộ dữ liệu
+  const getsBefore = srv.log.length;
+  await P.engine.pull(); await P.engine.pull(); await wait(30);
+  const bigReads = srv.log.slice(getsBefore).filter((l) => l.startsWith("full:")).length;
+  ok(bigReads === 0, "pull khi không có thay đổi chỉ dùng truy vấn nhẹ, không tải lại toàn bộ");
+  Q.set((s) => ({ ...s, tx: s.tx.map((t) => (t.id === "q1" ? { ...t, amount: 2222 } : t)) })); // chỉ SỬA (số dòng không đổi)
+  await wait(120);
+  await P.engine.pull();
+  ok(P.store.tx.find((t) => t.id === "q1")?.amount === 2222, "pull phát hiện cả thay đổi chỉ-sửa (số dòng không đổi)");
   P.engine.stop(); Q.engine.stop();
 
   A.engine.stop(); B.engine.stop(); C.engine.stop(); D.engine.stop();

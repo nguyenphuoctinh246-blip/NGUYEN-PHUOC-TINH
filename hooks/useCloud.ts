@@ -13,7 +13,7 @@ import type { StoreApi } from "./useStore";
 
 const LINK_KEY = "vn_cloud_uid";
 const SNAP_KEY = "vn_cloud_snap_";
-const IDLE: SyncInfo = { status: "idle", pending: 0, lastSync: null, message: "" };
+const IDLE: SyncInfo = { status: "idle", pending: 0, lastSync: null, message: "", realtime: false };
 
 const readLink = () => { try { return localStorage.getItem(LINK_KEY); } catch { return null; } };
 const writeLink = (v: string | null) => { try { if (v) localStorage.setItem(LINK_KEY, v); else localStorage.removeItem(LINK_KEY); } catch { /* bỏ qua */ } };
@@ -138,7 +138,7 @@ export function useCloud(s: StoreApi) {
         void eng.pull();
       };
       const flush = () => void eng.flush();
-      const iv = setInterval(pull, 15000);
+      const iv = setInterval(pull, 6000);
       document.addEventListener("visibilitychange", pull);
       window.addEventListener("focus", pull);
       window.addEventListener("online", flush);

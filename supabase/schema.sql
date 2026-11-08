@@ -269,6 +269,11 @@ grant execute on function public.register_device(text, text, text), public.my_de
   public.approve_device(text, text), public.deny_device(text), public.revoke_device(text),
   public.create_recovery_codes(), public.use_recovery_code(text), public.device_ok(), public.current_session_id() to authenticated;
 
+-- Cấp quyền rõ ràng cho người đã đăng nhập (an toàn kể cả khi Supabase không tự cấp), và không cho khách ẩn danh.
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.transactions, public.accounts, public.goals, public.categories, public.settings to authenticated;
+revoke all on public.transactions, public.accounts, public.goals, public.categories, public.settings from anon;
+
 -- Bảo mật dữ liệu: mỗi người chỉ đọc/ghi dữ liệu của chính mình, VÀ chỉ từ thiết bị đã được duyệt.
 do $$
 declare t text;

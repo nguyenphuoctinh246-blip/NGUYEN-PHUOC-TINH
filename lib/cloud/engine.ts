@@ -5,7 +5,7 @@ import { DEFAULT_CATEGORIES } from "../categories";
 import { TABLES, canon, fromRow, realRecords, toRow, type Table } from "./map";
 
 export type SyncStatus = "idle" | "syncing" | "synced" | "offline" | "error";
-export interface SyncInfo { status: SyncStatus; pending: number; lastSync: number | null; message: string }
+export interface SyncInfo { status: SyncStatus; pending: number; lastSync: number | null; message: string; realtime: boolean }
 
 export type RemoteChange =
   | { table: Exclude<Table, "settings">; kind: "upsert"; record: unknown }
@@ -52,7 +52,8 @@ export class SyncEngine {
   private dirty = false;
   private started = false;
   private stopped = false;
-  private info: SyncInfo = { status: "idle", pending: 0, lastSync: null, message: "" };
+  private info: SyncInfo = { status: "idle", pending: 0, lastSync: null, message: "", realtime: false };
+  private lastFp = "";
 
   constructor(private db: SupabaseClient, private uid: string, private h: Handlers, private debounceMs = 500, private storage?: SnapshotStorage) {}
 
@@ -71,6 +72,19 @@ export class SyncEngine {
       if (!data || data.length < PAGE) break;
     }
     return out;
+  }
+
+  /**
+   * "Dấu vân tay" rẻ tiền của dữ liệu trên máy chủ: số dòng + thời điểm sửa gần nhất của từng bảng.
+   * Khác nhau nghĩa là có thay đổi (thêm, sửa, xóa) từ thiết bị nào đó.
+   */
+  async fingerprint(): Promise<string> {
+    const parts = await Promise.all(TABLES.map(async (t) => {
+      const { data, count, error } = await this.db.from(t).select("updated_at", { count: "exact" }).eq("user_id", this.uid).order("updated_at", { ascending: false }).limit(1);
+      if (error) throw error;
+      return `${t}:${count ?? 0}:${(data as { updated_at?: string }[] | null)?.[0]?.updated_at ?? ""}`;
+    }));
+    return parts.join("|");
   }
 
   /** Dữ liệu đúng như đang có trên máy chủ (có thể thiếu tài khoản/danh mục nếu tài khoản mới) */
@@ -144,6 +158,7 @@ export class SyncEngine {
    */
   async start(mode: "account" | "merge" | "resume"): Promise<void> {
     this.emit({ status: "syncing", message: "Đang tải dữ liệu từ tài khoản…" });
+    const fp0 = await this.fingerprint().catch(() => "");
     const remote = await this.fetchRemote();
     // Tài khoản mới chưa có tài khoản/danh mục: dùng bộ mặc định và để diff tải chúng lên
     const withDefaults: Store = {
@@ -159,6 +174,7 @@ export class SyncEngine {
     this.setSnapshot(remote);
     this.h.replaceStore(local);
     this.started = true;
+    this.lastFp = fp0;
     this.subscribe();
     await this.flush();
     this.persist();
@@ -177,7 +193,13 @@ export class SyncEngine {
     this.running = true; // chặn đẩy lên chen ngang trong lúc gộp
     let again = false;
     try {
+      const fp = await this.fingerprint();
+      if (fp === this.lastFp) { // không có thay đổi mới trên tài khoản: khỏi tải lại cả dữ liệu
+        this.emit({ status: "synced", lastSync: Date.now(), message: "" });
+        again = true;
+      } else {
       const remote = await this.fetchRemote();
+      this.lastFp = fp;
       const withDefaults: Store = {
         ...remote,
         accounts: remote.accounts.length ? remote.accounts : DEFAULT_ACCOUNTS,
@@ -191,6 +213,7 @@ export class SyncEngine {
       this.persist();
       this.emit({ status: "synced", lastSync: Date.now(), message: "" });
       again = true;
+      }
     } catch {
       /* lỗi mạng tạm thời: lần sau thử lại, không đổi trạng thái đang hiển thị */
     } finally {
@@ -284,7 +307,7 @@ export class SyncEngine {
       // Sự kiện xóa không lọc được theo cột, nên nghe riêng và tự kiểm tra user_id
       ch = ch.on("postgres_changes", { event: "DELETE", schema: "public", table }, (p) => this.onRemote(table, p as unknown as { eventType: string; new: Row; old: Row }));
     }
-    this.channel = ch.subscribe();
+    this.channel = ch.subscribe((status) => this.emit({ realtime: status === "SUBSCRIBED" }));
   }
 
   private persistTimer: ReturnType<typeof setTimeout> | null = null;

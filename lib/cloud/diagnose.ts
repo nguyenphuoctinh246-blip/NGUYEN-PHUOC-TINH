@@ -49,7 +49,7 @@ export async function diagnose(rawUrl: string, key: string): Promise<Diagnosis> 
   let tables = false;
   try {
     const t = await call(url, key, "/rest/v1/transactions?select=id&limit=1");
-    tables = t.status === 200;
+    tables = t.status === 200 || ((t.status === 401 || t.status === 403) && /42501|permission denied/i.test(JSON.stringify(t.body ?? {})));
     const missingTable = t.status === 404 || /PGRST205|42P01|does not exist|Could not find the table/i.test(JSON.stringify(t.body ?? {}));
     checks.push(tables
       ? { label: "Đã có bảng dữ liệu (schema.sql đã chạy)", ok: true }

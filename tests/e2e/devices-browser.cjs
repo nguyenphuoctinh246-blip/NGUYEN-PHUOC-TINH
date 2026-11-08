@@ -80,6 +80,18 @@ async function until(fn, ms = 20000, step = 400) { const t = Date.now(); while (
   const chk = await body(D);
   ok(chk.includes('khớp hoàn toàn') && !chk.includes('Lệch'), 'kiểm tra dữ liệu: khớp hoàn toàn');
 
+  console.log('5b. Chẩn đoán: hai máy cùng máy chủ và cùng mã tài khoản');
+  await nav(P, 'Đồng bộ'); await sleep(600);
+  const field = async (p, label) => (await p.locator(`dt:has-text("${label}") + dd`).first().innerText()).trim();
+  const dAcc = await field(D, 'Tài khoản'), pAcc = await field(P, 'Tài khoản');
+  const dHost = await field(D, 'Máy chủ'), pHost = await field(P, 'Máy chủ');
+  ok(dAcc === pAcc && /mã [0-9a-f]{6}/.test(dAcc), `mã tài khoản hai máy giống nhau (${dAcc})`);
+  ok(dHost === pHost, `hai máy cùng máy chủ (${dHost})`);
+  ok((await field(P, 'Thiết bị')).includes('đã được duyệt'), 'điện thoại báo thiết bị đã được duyệt');
+  console.log('5c. Nhập trên máy tính, điện thoại tự thấy trong vài giây (không bấm gì)');
+  await nav(D, 'Giao dịch'); await add(D, 33000, 'Chiều ngược lại');
+  await nav(P, 'Giao dịch');
+  ok(await until(async () => (await body(P)).includes('Chiều ngược lại'), 15000, 500), 'điện thoại tự thấy giao dịch mới của máy tính trong vài giây');
   console.log('6. Máy tính bảng dùng mã khôi phục thay vì mã duyệt');
   await goto(T, 'dong-bo');
   await T.fill('#auth-email', 'chu@email.com'); await T.fill('#auth-pw', 'matkhau123'); await T.click('form button[type=submit]');
