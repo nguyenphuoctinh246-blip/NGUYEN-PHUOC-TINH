@@ -91,6 +91,7 @@ function Signed() {
   const host = (() => { try { return cfgNow ? new URL(cfgNow.url).host : "–"; } catch { return cfgNow?.url ?? "–"; } })();
   const localTx = s.tx.filter((t) => !t.isSample).length;
   const diag: [string, string][] = [
+    ["Phiên bản ứng dụng", `${process.env.NEXT_PUBLIC_COMMIT ?? "?"} · xây dựng ${process.env.NEXT_PUBLIC_BUILD_TIME ? new Date(process.env.NEXT_PUBLIC_BUILD_TIME).toLocaleString("vi-VN") : "?"}`],
     ["Máy chủ", host],
     ["Tài khoản", `${user?.email ?? "–"} · mã ${(user?.id ?? "").slice(0, 6)}`],
     ["Thiết bị", `${deviceName()} · ${cloud.device.legacy ? "chưa bật duyệt thiết bị" : "đã được duyệt"}`],
