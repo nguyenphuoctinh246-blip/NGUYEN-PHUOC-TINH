@@ -1,6 +1,9 @@
 // Kiểm thử trình duyệt thật: nhập cấu hình ngay trong ứng dụng (không cần biến môi trường),
 // chia sẻ link/QR sang điện thoại, rồi duyệt thiết bị bằng mã. Ứng dụng build KHÔNG có biến Supabase.
 const { chromium, devices } = require('playwright');
+const http = require('http');
+// Máy chủ giả trả về trang web HTML (như khi dán nhầm địa chỉ mẫu hoặc trang quản lý)
+const htmlServer = http.createServer((q, r) => { r.writeHead(200, { 'content-type': 'text/html', 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' }); r.end('<!DOCTYPE html><html><body>Not Supabase</body></html>'); }).listen(54400);
 
 const APP = (process.env.APP_URL || 'http://localhost:3107') + '/ung-dung';
 const MOCK = 'http://localhost:54321';
@@ -34,6 +37,10 @@ async function until(fn, ms = 20000, step = 400) { const t = Date.now(); while (
   console.log('2. Báo lỗi dễ hiểu khi nhập sai');
   await D.fill('#cfg-url', 'khong-phai-dia-chi'); await D.fill('#cfg-key', 'x'); await D.click('button:has-text("Kiểm tra và kết nối")'); await sleep(1200);
   ok((await body(D)).includes('Nhập đủ Project URL'), 'địa chỉ không hợp lệ: nhắc nhập đúng Project URL');
+  await D.fill('#cfg-url', 'http://localhost:54400'); await D.fill('#cfg-key', 'test-anon-key'); await D.click('button:has-text("Kiểm tra và kết nối")'); await sleep(1200);
+  ok((await body(D)).includes('không trả lời như một dự án Supabase'), 'địa chỉ trả về trang web HTML: báo không phải Supabase (đúng lỗi bạn gặp)');
+  await D.fill('#cfg-url', 'https://supabase.com/dashboard/project/abc'); await D.click('button:has-text("Kiểm tra và kết nối")'); await sleep(600);
+  ok((await body(D)).includes('địa chỉ một trang web'), 'dán địa chỉ trang quản lý supabase.com: bị từ chối');
   await D.fill('#cfg-url', MOCK); await D.fill('#cfg-key', 'sai-khoa'); await D.click('button:has-text("Kiểm tra và kết nối")'); await sleep(1200);
   ok((await body(D)).includes('Khóa không đúng'), 'khóa sai: báo "Khóa không đúng"');
   await D.fill('#cfg-key', 'service_role-abc'); await D.click('button:has-text("Kiểm tra và kết nối")'); await sleep(600);
@@ -48,9 +55,16 @@ async function until(fn, ms = 20000, step = 400) { const t = Date.now(); while (
   ok(!link.includes('matkhau'), 'link không chứa mật khẩu');
 
   console.log('4. Điện thoại mở link: tự nhận cấu hình, không phải nhập gì');
-  await P.goto(link); await sleep(1500);
-  ok(await P.locator('#auth-email').count() === 1, 'điện thoại hiện form đăng nhập ngay (đã tự kết nối)');
+  await P.goto(link); await sleep(1200);
+  ok((await body(P)).includes('Kết nối ứng dụng tới cơ sở dữ liệu này?') && (await body(P)).includes('localhost:54321'), 'điện thoại hỏi xác nhận và hiện rõ máy chủ sẽ kết nối (chống link giả mạo)');
+  await P.click('[role=dialog] button:has-text("Hủy")'); await sleep(500);
+  ok(await P.locator('#cfg-url').count() === 1, 'bấm Hủy: không kết nối, vẫn ở form nhập thủ công');
+  await P.goto(link); await sleep(1200); await P.click('[role=dialog] button:has-text("Đúng, kết nối")'); await sleep(1800);
+  ok(await P.locator('#auth-email').count() === 1, 'bấm xác nhận: điện thoại hiện form đăng nhập (đã tự kết nối)');
   ok(!(await P.evaluate(() => location.hash)).includes('ket-noi'), 'đã xóa cấu hình khỏi thanh địa chỉ');
+  console.log('4b. Kiểm tra kết nối ngay cạnh form đăng nhập');
+  await P.click('button:has-text("Kiểm tra kết nối")'); await sleep(1500);
+  ok((await body(P)).includes('Kết nối được dự án Supabase'), 'nút Kiểm tra kết nối báo kết nối tốt');
 
   console.log('5. Tạo tài khoản trên máy tính, duyệt điện thoại bằng mã, dữ liệu dùng chung');
   await D.click('[role=tab]:has-text("Tạo tài khoản")'); await D.fill('#auth-email', 'qc@email.com'); await D.fill('#auth-pw', 'matkhau123'); await D.click('form button[type=submit]');
@@ -70,7 +84,7 @@ async function until(fn, ms = 20000, step = 400) { const t = Date.now(); while (
 
   console.log('\nLỗi console/trang:', errors.length ? errors : 'không có');
   ok(errors.length === 0, 'không có lỗi JavaScript');
-  await b.close();
+  await b.close(); htmlServer.close();
   console.log(fails ? `\n${fails} kiểm thử THẤT BẠI` : '\nTất cả kiểm thử kết nối nhanh đạt');
   process.exit(fails ? 1 : 0);
 })();

@@ -120,6 +120,16 @@ function Shell() {
       </button>}
       {txModal.open && !gated && <TxModal />}
       {cloud.recovery && <RecoveryModal codes={cloud.recovery} />}
+      {cloud.pendingConnect && (
+        <Modal title="Kết nối ứng dụng tới cơ sở dữ liệu này?" onClose={cloud.declineConnect}>
+          <div className="flex flex-col gap-4">
+            <p className="m-0 text-[14px] leading-relaxed">Link bạn vừa mở muốn kết nối ứng dụng tới máy chủ:</p>
+            <div className="rounded-lg bg-surface-alt px-3 py-2.5 text-center font-mono text-[15px] font-semibold break-all">{(() => { try { return new URL(cloud.pendingConnect.url).host; } catch { return cloud.pendingConnect.url; } })()}</div>
+            <p className="m-0 rounded-lg bg-warn-soft px-3 py-2 text-xs leading-relaxed text-warn">Chỉ đồng ý nếu đây là dự án Supabase của chính bạn và link do bạn tạo (quét từ mã QR trên máy của bạn). Nếu link do người khác gửi, hãy chọn Hủy: email và mật khẩu bạn nhập sau đó sẽ được gửi tới máy chủ này.</p>
+            <div className="flex justify-end gap-2 border-t border-line-light pt-3.5"><Button onClick={cloud.declineConnect}>Hủy</Button><Button variant="primary" onClick={() => void cloud.acceptConnect()}>Đúng, kết nối</Button></div>
+          </div>
+        </Modal>
+      )}
       {cloud.choice && (
         <Modal title="Gộp dữ liệu trên máy này?" onClose={() => {}}>
           <div className="flex flex-col gap-4">

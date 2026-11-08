@@ -11,21 +11,24 @@ const STORE_KEY = "vn_cloud_config";
 
 export interface CloudConfig { url: string; key: string; source: "env" | "device" }
 
+/** Chuẩn hóa Project URL: thêm https://, bỏ phần đường dẫn thừa (ví dụ /rest/v1/ hay /dashboard/...) */
 export function normalizeUrl(u: string): string {
   let v = u.trim().replace(/\/+$/, "");
   if (v && !/^https?:\/\//i.test(v)) v = "https://" + v;
-  return v;
+  try { return new URL(v).origin; } catch { return v; }
 }
 
+/** Cấu hình nhập trong ứng dụng được ưu tiên hơn biến môi trường, để sửa được khi biến môi trường bị sai */
 export function getCloudConfig(): CloudConfig | null {
+  if (runtimeConfigAllowed && typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      const c = raw ? (JSON.parse(raw) as { url?: string; key?: string }) : null;
+      if (c?.url && c.key) return { url: c.url, key: c.key, source: "device" };
+    } catch { /* bỏ qua */ }
+  }
   if (ENV_URL && ENV_KEY) return { url: ENV_URL, key: ENV_KEY, source: "env" };
-  if (!runtimeConfigAllowed || typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return null;
-    const c = JSON.parse(raw) as { url?: string; key?: string };
-    return c.url && c.key ? { url: c.url, key: c.key, source: "device" } : null;
-  } catch { return null; }
+  return null;
 }
 
 export function saveCloudConfig(url: string, key: string) {
@@ -43,15 +46,21 @@ export function shareLink(c: CloudConfig): string {
   return `${window.location.origin}${window.location.pathname}#ket-noi=${enc({ u: c.url, k: c.key })}`;
 }
 
-/** Nếu địa chỉ có #ket-noi=..., lưu cấu hình và đưa về mục Đồng bộ. Trả về true nếu đã nhập. */
-export function importConfigFromHash(): boolean {
-  if (!runtimeConfigAllowed || typeof window === "undefined") return false;
+/**
+ * Đọc cấu hình trong địa chỉ dạng #ket-noi=... NHƯNG CHƯA LƯU: người dùng phải xác nhận,
+ * để người lạ không thể gửi link đổi ứng dụng sang máy chủ giả mạo rồi lấy mật khẩu.
+ */
+export function parseConnectHash(): { url: string; key: string } | null {
+  if (!runtimeConfigAllowed || typeof window === "undefined") return null;
   const m = window.location.hash.match(/^#ket-noi=(.+)$/);
-  if (!m) return false;
+  if (!m) return null;
   try {
     const { u, k } = dec(m[1]) as { u?: string; k?: string };
-    if (u && k && /^https?:\/\//i.test(u) && !(ENV_URL && ENV_KEY)) saveCloudConfig(u, k);
-  } catch { /* liên kết hỏng: bỏ qua */ }
-  history.replaceState(null, "", window.location.pathname + "#dong-bo");
-  return true;
+    if (u && k && /^https?:\/\//i.test(u)) return { url: normalizeUrl(u), key: k };
+  } catch { /* liên kết hỏng */ }
+  return null;
+}
+
+export function clearConnectHash() {
+  window.location.hash = "dong-bo"; // xóa cấu hình khỏi thanh địa chỉ và mở mục Đồng bộ
 }

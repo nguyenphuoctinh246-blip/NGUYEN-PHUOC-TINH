@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { getCloud } from "@/lib/cloud/client";
-import { getCloudConfig, importConfigFromHash, shareLink, type CloudConfig } from "@/lib/cloud/config";
+import { clearConnectHash, getCloudConfig, parseConnectHash, saveCloudConfig, shareLink, type CloudConfig } from "@/lib/cloud/config";
 import {
   approveDevice, createRecoveryCodes, denyDevice, deviceIdentity, forgetDevice, listDevices, myDevice,
   registerDevice, revokeDevice, useRecoveryCode, type DeviceInfo,
@@ -27,7 +27,8 @@ export function viAuthError(msg: string): string {
   if (m.includes("not confirmed")) return "Email chưa được xác nhận. Hãy mở email xác nhận rồi đăng nhập lại.";
   if (m.includes("invalid") && m.includes("email")) return "Email không hợp lệ.";
   if (m.includes("rate limit") || m.includes("too many")) return "Thao tác quá nhanh. Vui lòng thử lại sau ít phút.";
-  if (m.includes("fetch") || m.includes("network")) return "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.";
+  if (m.includes("not valid json") || m.includes("unexpected token") || m.includes("<!doctype")) return "Địa chỉ Supabase đã nhập không đúng (máy chủ trả về một trang web thay vì dữ liệu). Hãy bấm Kiểm tra kết nối bên dưới, rồi nhập lại Project URL.";
+  if (m.includes("fetch") || m.includes("network") || m.includes("failed to")) return "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.";
   return msg;
 }
 
@@ -39,6 +40,7 @@ export interface DeviceState { status: "checking" | "approved" | "pending" | "de
 export function useCloud(s: StoreApi) {
   const [cfg, setCfg] = useState<CloudConfig | null>(null);
   const [cfgReady, setCfgReady] = useState(false);
+  const [pendingConnect, setPendingConnect] = useState<{ url: string; key: string } | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [info, setInfo] = useState<SyncInfo>(IDLE);
@@ -53,9 +55,13 @@ export function useCloud(s: StoreApi) {
 
   // Đọc cấu hình kết nối (biến môi trường, hoặc cấu hình đã nhập/nhận qua link #ket-noi=...)
   useEffect(() => {
-    importConfigFromHash();
+    setPendingConnect(parseConnectHash());
     setCfg(getCloudConfig());
     setCfgReady(true);
+    // Dán link kết nối vào thanh địa chỉ khi ứng dụng đang mở cũng phải hỏi xác nhận
+    const onHash = () => { const p = parseConnectHash(); if (p) setPendingConnect(p); };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
   useEffect(() => {
@@ -234,11 +240,20 @@ export function useCloud(s: StoreApi) {
     return r;
   }, []);
   const dismissRecovery = useCallback(() => setRecovery(null), []);
+  const acceptConnect = useCallback(async () => {
+    if (!pendingConnect) return;
+    try { await getCloud()?.auth.signOut(); } catch { /* bỏ qua */ }
+    saveCloudConfig(pendingConnect.url, pendingConnect.key);
+    clearConnectHash();
+    window.location.reload();
+  }, [pendingConnect]);
+  const declineConnect = useCallback(() => { clearConnectHash(); setPendingConnect(null); }, []);
 
   return {
     configured, configSource: cfg?.source ?? null, authReady, makeShareLink: () => (cfg ? shareLink(cfg) : ""), user: session?.user ?? null, info, choice, resolveChoice,
     signIn, signUp, signOut, syncNow, verify, reload,
     device, devices, pendingDevices: devices.filter((d) => d.status === "pending"), refreshDevices,
+    pendingConnect, acceptConnect, declineConnect,
     approve, deny, revoke, recovery, newRecoveryCodes, dismissRecovery, submitRecovery,
   };
 }

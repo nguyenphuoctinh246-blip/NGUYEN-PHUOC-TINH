@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { clearCloudConfig, runtimeConfigAllowed, saveCloudConfig } from "@/lib/cloud/config";
+import { clearCloudConfig, getCloudConfig, runtimeConfigAllowed, saveCloudConfig } from "@/lib/cloud/config";
 import { diagnose, type Diagnosis } from "@/lib/cloud/diagnose";
 import { useApp } from "../app/AppContext";
 import Icon from "../Icon";
@@ -111,3 +111,43 @@ export function ShareCard() {
   );
 }
 
+
+/** Hiện địa chỉ đang kết nối và cho kiểm tra lại, để tự phát hiện Project URL/khóa sai */
+export function ConnectionCheck() {
+  const { cloud } = useApp();
+  const [res, setRes] = useState<Diagnosis | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [edit, setEdit] = useState(false);
+  const cfg = typeof window === "undefined" ? null : getCloudConfig();
+  const host = (() => { try { return cfg ? new URL(cfg.url).host : ""; } catch { return cfg?.url ?? ""; } })();
+
+  async function run() {
+    if (!cfg) return;
+    setBusy(true);
+    try { setRes(await diagnose(cfg.url, cfg.key)); } finally { setBusy(false); }
+  }
+  const failed = res && !res.ready;
+
+  return (
+    <Card title="Kết nối đang dùng" icon="cloud" color={10}
+      action={<Button onClick={() => void run()} disabled={busy} className="!py-1.5 text-xs">{busy ? "Đang kiểm tra…" : "Kiểm tra kết nối"}</Button>}>
+      <p className="m-0 text-[13px] text-fg-2">Máy chủ: <b className="font-mono">{host || "chưa có"}</b> <span className="text-muted">({cloud.configSource === "env" ? "đặt trên Vercel" : "nhập trong ứng dụng"})</span></p>
+      {res && (
+        <ul className="m-0 mt-3 flex list-none flex-col gap-2 p-0" aria-live="polite">
+          {res.checks.map((c) => (
+            <li key={c.label} className={`rounded-lg px-3 py-2.5 text-[13px] ${!c.ok ? "bg-expense-soft text-expense" : c.warn ? "bg-warn-soft text-warn" : "bg-income-soft text-income"}`}>
+              <b>{c.ok ? (c.warn ? "! " : "✓ ") : "✗ "}{c.label}</b>
+              {c.detail && <div className="mt-0.5 text-xs opacity-90">{c.detail}</div>}
+            </li>
+          ))}
+        </ul>
+      )}
+      {failed && runtimeConfigAllowed && (
+        <div className="mt-3">
+          {cloud.configSource === "env" && <p className="mt-0 mb-2 text-xs text-muted">Địa chỉ này đang được đặt trong biến môi trường trên Vercel. Bạn có thể nhập địa chỉ đúng bên dưới (ưu tiên hơn biến môi trường), hoặc sửa biến NEXT_PUBLIC_SUPABASE_URL trên Vercel rồi Redeploy.</p>}
+          {edit ? <ConnectForm /> : <Button onClick={() => setEdit(true)}>Nhập lại Project URL và khóa</Button>}
+        </div>
+      )}
+    </Card>
+  );
+}

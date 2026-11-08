@@ -6,7 +6,7 @@ import { useApp } from "../app/AppContext";
 import Icon from "../Icon";
 import { Button, Card, Field, Pill } from "../ui";
 import DevicesCard from "./DevicesCard";
-import { ConnectForm, ShareCard } from "./ConnectCard";
+import { ConnectForm, ConnectionCheck, ShareCard } from "./ConnectCard";
 import { runtimeConfigAllowed } from "@/lib/cloud/config";
 
 function Setup() {
@@ -184,5 +184,5 @@ export default function SyncView() {
   if (!cloud.authReady && !cloud.configured) return <div className="card h-40 animate-pulse" aria-busy="true" />;
   if (!cloud.configured) return runtimeConfigAllowed ? <ConnectForm /> : <Setup />;
   if (!cloud.authReady) return <div className="card h-40 animate-pulse" aria-busy="true" />;
-  return cloud.user ? <Signed /> : (<div className="flex flex-col gap-4"><AuthCard /><div className="mx-auto w-full max-w-2xl"><ShareCard /></div></div>);
+  return cloud.user ? <Signed /> : (<div className="flex flex-col gap-4"><AuthCard /><div className="mx-auto flex w-full max-w-2xl flex-col gap-4"><ConnectionCheck /><ShareCard /></div></div>);
 }
