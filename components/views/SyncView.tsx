@@ -5,6 +5,7 @@ import type { VerifyRow } from "@/lib/cloud/engine";
 import { useApp } from "../app/AppContext";
 import Icon from "../Icon";
 import { Button, Card, Field, Pill } from "../ui";
+import DevicesCard from "./DevicesCard";
 
 function Setup() {
   return (
@@ -80,6 +81,7 @@ function Signed() {
   const [err, setErr] = useState("");
   const [copied, setCopied] = useState(false);
   const [confirmOut, setConfirmOut] = useState(false);
+  const [forget, setForget] = useState(false);
   const link = typeof window === "undefined" ? "" : window.location.href.split("#")[0];
 
   async function check() {
@@ -107,11 +109,16 @@ function Signed() {
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => void cloud.syncNow()} className="!border-white/30 !bg-white/15 !text-white hover:!bg-white/25"><Icon name="refresh" className="size-4" />Đồng bộ ngay</Button>
             {confirmOut ? (
-              <><Button variant="danger" onClick={() => void cloud.signOut()}>Xác nhận đăng xuất</Button><Button onClick={() => setConfirmOut(false)}>Hủy</Button></>
+              <><Button variant="danger" onClick={() => void cloud.signOut(forget)}>Xác nhận đăng xuất</Button><Button onClick={() => setConfirmOut(false)}>Hủy</Button></>
             ) : <Button onClick={() => setConfirmOut(true)} className="!border-white/30 !bg-white/15 !text-white hover:!bg-white/25">Đăng xuất</Button>}
           </div>
         </div>
-        {confirmOut && <p className="relative mt-3 mb-0 text-xs opacity-90">Đăng xuất sẽ xóa dữ liệu lưu trên máy này (dữ liệu vẫn còn nguyên trong tài khoản). Đăng nhập lại để tải về.</p>}
+        {confirmOut && (
+          <div className="relative mt-3 text-xs opacity-90">
+            <p className="m-0">Đăng xuất sẽ xóa dữ liệu lưu trên máy này (dữ liệu vẫn còn nguyên trong tài khoản). Đăng nhập lại để tải về.</p>
+            {!cloud.device.legacy && <label className="mt-2 flex cursor-pointer items-center gap-2"><input type="checkbox" checked={forget} onChange={(e) => setForget(e.target.checked)} />Quên thiết bị này (lần sau phải được duyệt lại bằng mã, nên chọn khi dùng máy chung)</label>}
+          </div>
+        )}
       </section>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -128,6 +135,8 @@ function Signed() {
           </div>
         </Card>
       </div>
+
+      <DevicesCard />
 
       <Card title="Kiểm tra dữ liệu" icon="check" color={3} action={<Button variant="primary" onClick={() => void check()} disabled={checking}>{checking ? "Đang kiểm tra…" : "Kiểm tra ngay"}</Button>}>
         <p className="mt-0 mb-3 text-[13px] text-muted">So sánh dữ liệu trên máy này với dữ liệu đang lưu trong tài khoản, để chắc chắn mọi thiết bị thấy cùng một số liệu.</p>

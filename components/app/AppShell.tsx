@@ -12,6 +12,8 @@ import Overview from "../views/Overview";
 import Categories from "../views/Categories";
 import SyncView from "../views/SyncView";
 import SyncPill from "./SyncPill";
+import DeviceGate from "./DeviceGate";
+import RecoveryModal from "./RecoveryModal";
 import { Modal } from "../ui";
 import Transactions from "../views/Transactions";
 import Budgets from "../views/Budgets";
@@ -23,7 +25,8 @@ import DataView from "../views/DataView";
 function Shell() {
   const { view, go, s, openTx, txModal, cloud } = useApp();
   const current = VIEWS.find((v) => v.id === view)!;
-  const showPeriod = view !== "tai-khoan" && view !== "du-lieu" && view !== "muc-tieu" && view !== "danh-muc" && view !== "dong-bo";
+  const gated = !!cloud.user && cloud.device.status !== "approved";
+  const showPeriod = !gated && view !== "tai-khoan" && view !== "du-lieu" && view !== "muc-tieu" && view !== "danh-muc" && view !== "dong-bo";
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
@@ -61,7 +64,7 @@ function Shell() {
             <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
               <SyncPill />
               {showPeriod && <PeriodBar />}
-              <Button variant="primary" onClick={() => openTx(null)} className="max-lg:hidden !h-9 !border-0 !bg-gradient-to-r !from-brand-from !to-brand-to"><Icon name="plus" className="size-4" />Thêm giao dịch</Button>
+              {!gated && <Button variant="primary" onClick={() => openTx(null)} className="max-lg:hidden !h-9 !border-0 !bg-gradient-to-r !from-brand-from !to-brand-to"><Icon name="plus" className="size-4" />Thêm giao dịch</Button>}
             </div>
           </div>
           <nav aria-label="Chức năng" className="flex gap-1 overflow-x-auto px-4 pb-2 lg:hidden">
@@ -78,8 +81,20 @@ function Shell() {
         </header>
 
         <main className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6">
-          {!s.ready ? <Skeleton /> : (
+          {!s.ready ? <Skeleton /> : gated ? <DeviceGate /> : (
             <>
+              {cloud.pendingDevices.length > 0 && view !== "dong-bo" && (
+                <button type="button" onClick={() => go("dong-bo")} className="mb-5 flex w-full cursor-pointer flex-wrap items-center justify-between gap-2 rounded-lg border border-line-light bg-warn-soft px-3.5 py-2.5 text-left text-[13px] font-medium text-warn">
+                  <span>🔐 Có {cloud.pendingDevices.length} thiết bị đang xin vào: {cloud.pendingDevices.map((d) => d.name || "Thiết bị lạ").join(", ")}. Nhập mã để cho phép.</span>
+                  <span className="font-semibold underline">Xem và duyệt</span>
+                </button>
+              )}
+              {view !== "dong-bo" && !cloud.user && cloud.authReady && (
+                <button type="button" onClick={() => go("dong-bo")} className="mb-5 flex w-full cursor-pointer flex-wrap items-center justify-between gap-2 rounded-lg border border-line-light bg-surface px-3.5 py-2.5 text-left text-[13px] text-fg-2">
+                  <span>📵 <b>Dữ liệu chỉ lưu trên thiết bị này.</b> Điện thoại và máy tính khác sẽ không thấy dữ liệu bạn nhập ở đây{cloud.configured ? ". Đăng nhập để đồng bộ." : ". Cần bật đồng bộ (xem hướng dẫn)."}</span>
+                  <span className="font-semibold text-accent">{cloud.configured ? "Đăng nhập" : "Cách bật đồng bộ"}</span>
+                </button>
+              )}
               {s.hasSamples && view !== "du-lieu" && !cloud.user && (
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line-light bg-accent-soft px-3.5 py-2.5 text-[13px] font-medium text-fg-2">
                   <span>📌 Đang hiển thị dữ liệu mẫu. Thêm giao dịch đầu tiên của bạn, dữ liệu mẫu sẽ tự biến mất.</span>
@@ -99,11 +114,12 @@ function Shell() {
           )}
         </main>
       </div>
-      <button type="button" onClick={() => openTx(null)} aria-label="Thêm giao dịch"
+      {!gated && <button type="button" onClick={() => openTx(null)} aria-label="Thêm giao dịch"
         className="fixed right-4 bottom-[max(16px,env(safe-area-inset-bottom))] z-40 flex h-12 cursor-pointer items-center gap-2 rounded-full border-none bg-gradient-to-r from-brand-from to-brand-to px-5 text-sm font-semibold text-white shadow-pop lg:hidden">
         <Icon name="plus" className="size-5" />Thêm
-      </button>
-      {txModal.open && <TxModal />}
+      </button>}
+      {txModal.open && !gated && <TxModal />}
+      {cloud.recovery && <RecoveryModal codes={cloud.recovery} />}
       {cloud.choice && (
         <Modal title="Gộp dữ liệu trên máy này?" onClose={() => {}}>
           <div className="flex flex-col gap-4">

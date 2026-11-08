@@ -63,7 +63,17 @@ Mặc định dữ liệu chỉ lưu trên từng trình duyệt. Để nhiều 
 3. Trên Vercel → Settings → Environment Variables, thêm `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` (xem `.env.example`), rồi **Redeploy**.
 4. Mở `/ung-dung` → mục **Đồng bộ** → tạo tài khoản. Mở cùng link trên thiết bị khác và đăng nhập.
 
-Hướng dẫn có hình ảnh: file Word `Huong-dan-dong-bo-nhieu-thiet-bi.docx`. Kiểm thử logic đồng bộ: `npm test`.
+5. **Duyệt thiết bị bằng mã:** thiết bị đầu tiên được duyệt tự động và nhận 8 mã khôi phục (hãy lưu lại). Thiết bị mới đăng nhập sẽ hiện mã 6 số và bị chặn cho đến khi một thiết bị đã duyệt nhập mã đó ở Đồng bộ → Thiết bị đã đăng nhập. Việc chặn do chính cơ sở dữ liệu thực hiện (Row Level Security), không chỉ ở giao diện.
+
+Hướng dẫn có hình ảnh: file Word `Huong-dan-dong-bo-nhieu-thiet-bi.docx`.
+
+Kiểm thử:
+
+```bash
+npm test                        # logic đồng bộ (máy chủ giả lập trong bộ nhớ)
+psql -d <db> -f tests/sql/supabase-stub.sql -f supabase/schema.sql -f tests/sql/devices.test.sql   # RLS + duyệt thiết bị trên Postgres thật
+bash tests/e2e/run.sh           # trình duyệt thật: máy tính + điện thoại + máy tính bảng
+```
 
 ## Xử lý sự cố thường gặp
 

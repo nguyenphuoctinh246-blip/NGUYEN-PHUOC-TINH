@@ -164,6 +164,41 @@ export class SyncEngine {
     this.persist();
   }
 
+  private snapshotObject(): Snapshot {
+    return Object.fromEntries(TABLES.map((t) => [t, Object.fromEntries(this.snap[t])])) as Snapshot;
+  }
+
+  /**
+   * Kéo thay đổi mới từ tài khoản (không phụ thuộc Realtime): gọi định kỳ và khi quay lại ứng dụng.
+   * Gộp ba chiều với "ảnh chụp" lần đồng bộ trước nên không làm mất thay đổi chưa gửi trên máy.
+   */
+  async pull(): Promise<void> {
+    if (!this.started || this.stopped || this.running) return;
+    this.running = true; // chặn đẩy lên chen ngang trong lúc gộp
+    let again = false;
+    try {
+      const remote = await this.fetchRemote();
+      const withDefaults: Store = {
+        ...remote,
+        accounts: remote.accounts.length ? remote.accounts : DEFAULT_ACCOUNTS,
+        categories: remote.categories.length ? remote.categories : DEFAULT_CATEGORIES,
+      };
+      const local = this.h.getStore();
+      const merged = this.threeWay(withDefaults, local, this.snapshotObject(), "local");
+      this.setSnapshot(remote);
+      const sig = (st: Store) => TABLES.map((t) => [...realRecords(st)[t]].map(([id, r]) => id + hrow(r.row)).sort().join("|")).join("#");
+      if (sig(merged) !== sig(local)) this.h.replaceStore(merged);
+      this.persist();
+      this.emit({ status: "synced", lastSync: Date.now(), message: "" });
+      again = true;
+    } catch {
+      /* lỗi mạng tạm thời: lần sau thử lại, không đổi trạng thái đang hiển thị */
+    } finally {
+      this.running = false;
+    }
+    if (again || this.dirty) await this.flush();
+  }
+
   // ---------- đẩy lên ----------
   private diff() {
     const cur = realRecords(this.h.getStore());

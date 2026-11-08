@@ -191,6 +191,29 @@ const tx = (id: string, amount: number, extra: Partial<Transaction> = {}): Trans
   ok(v3.every((r) => r.onlyLocal === 0 && r.onlyRemote === 0 && r.different === 0), "kiểm tra dữ liệu: khớp hoàn toàn");
   A2.engine.stop();
 
+  console.log("11. Không có Realtime: kéo định kỳ (pull) vẫn đưa dữ liệu qua lại giữa hai máy");
+  const P = new Device("P", srv, "user-3", { ...emptyStore(), tx: [tx("p1", 1000)] });
+  await P.engine.start("merge");
+  const Q = new Device("Q", srv, "user-3", emptyStore());
+  await Q.engine.start("account");
+  P.client.handlers = []; Q.client.handlers = []; // tắt Realtime ở cả hai máy
+  Q.set((s) => ({ ...s, tx: [...s.tx, tx("q1", 2000, { payee: "từ điện thoại" })] }));
+  await wait(120);
+  ok(!P.store.tx.some((t) => t.id === "q1"), "(không có Realtime) P chưa thấy giao dịch của Q");
+  await P.engine.pull();
+  ok(P.store.tx.some((t) => t.id === "q1" && t.payee === "từ điện thoại"), "pull: P nhận giao dịch nhập trên Q");
+  P.set((s) => ({ ...s, tx: s.tx.filter((t) => t.id !== "p1") })); // P xóa p1 (chưa gửi)
+  Q.set((s) => ({ ...s, tx: [...s.tx, tx("q2", 3000)] }));        // Q thêm q2
+  await wait(120);
+  await P.engine.pull(); await Q.engine.pull(); await wait(60);
+  ok(P.store.tx.some((t) => t.id === "q2") && !P.store.tx.some((t) => t.id === "p1"), "pull: P nhận q2 và giữ việc xóa p1");
+  ok(!Q.store.tx.some((t) => t.id === "p1") && Q.store.tx.some((t) => t.id === "q2"), "pull: Q nhận việc xóa p1");
+  const vq = await Q.engine.verify();
+  ok(vq.every((r) => r.onlyLocal === 0 && r.onlyRemote === 0 && r.different === 0), "sau pull hai bên khớp hoàn toàn");
+  const calls0 = srv.upsertCalls; await P.engine.pull(); await Q.engine.pull(); await wait(40);
+  ok(srv.upsertCalls === calls0, "pull khi không có thay đổi không ghi thừa lên máy chủ");
+  P.engine.stop(); Q.engine.stop();
+
   A.engine.stop(); B.engine.stop(); C.engine.stop(); D.engine.stop();
   console.log(failures ? `\n${failures} kiểm thử THẤT BẠI` : "\nTất cả kiểm thử đạt");
   process.exit(failures ? 1 : 0);
