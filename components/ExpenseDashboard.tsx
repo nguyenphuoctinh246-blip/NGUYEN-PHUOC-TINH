@@ -13,21 +13,17 @@ export default function ExpenseDashboard() {
 
   return (
     <>
-      <header className="mb-[18px] flex items-start justify-between gap-3">
-        <div>
-          <h1 className="mb-0.5 text-[22px] leading-[1.2] font-extrabold tracking-[-0.02em]">Quản Lý Chi Tiêu</h1>
-          <p className="m-0 text-[13px] text-muted">Theo dõi thu chi cá nhân hàng ngày</p>
-        </div>
-        {hasSamples && (
+      {hasSamples && (
+        <div className="mb-3.5 flex items-center justify-end">
           <button
             type="button"
             onClick={clear}
             className="cursor-pointer whitespace-nowrap rounded-lg border border-line bg-surface px-3.5 py-1.5 text-xs font-medium text-fg-2 transition-colors hover:bg-surface-alt"
           >
-            Xóa mẫu
+            Xóa dữ liệu mẫu
           </button>
-        )}
-      </header>
+        </div>
+      )}
 
       {!ready ? (
         <Skeleton />

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "build:preview": "node scripts/build-preview.mjs"
   },
   "dependencies": {
     "next": "16.4.5",
@@ -14,10 +15,12 @@
     "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "4.1.17",
     "@tailwindcss/postcss": "4.1.17",
     "@types/node": "22.19.1",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+    "esbuild": "0.25.12",
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3"
   }

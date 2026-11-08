@@ -1,9 +1,5 @@
-import ExpenseDashboard from "@/components/ExpenseDashboard";
+import Landing from "@/components/Landing";
 
 export default function Home() {
-  return (
-    <main className="mx-auto max-w-[900px] px-4 pt-5 pb-12">
-      <ExpenseDashboard />
-    </main>
-  );
+  return <Landing />;
 }
