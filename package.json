@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "tsc --noEmit",
-    "build:preview": "node scripts/build-preview.mjs"
+    "build:preview": "node scripts/build-preview.mjs",
+    "test": "esbuild tests/sync.test.ts --bundle --platform=node --format=cjs --outfile=.test-build.cjs --log-level=error && node .test-build.cjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.119.0",
     "next": "16.4.5",
     "react": "19.3.1",
     "react-dom": "19.3.1"

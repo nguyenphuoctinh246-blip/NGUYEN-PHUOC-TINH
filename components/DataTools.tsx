@@ -12,12 +12,15 @@ export default function DataTools({
   transactions,
   accounts,
   hasSamples,
+  synced = false,
   onImport,
   onClear,
 }: {
   transactions: Transaction[];
   accounts: Account[];
   hasSamples: boolean;
+  /** đang đăng nhập đồng bộ: thay đổi áp dụng cho mọi thiết bị */
+  synced?: boolean;
   onImport: (items: Transaction[]) => void;
   onClear: () => void;
 }) {
@@ -98,6 +101,7 @@ export default function DataTools({
       </div>
 
       {hasSamples && <p className="mt-3 text-xs text-muted">Dữ liệu mẫu không được đưa vào file xuất.</p>}
+      {synced && confirmClear && <p role="alert" className="mt-3 rounded-lg bg-expense-soft px-3 py-2 text-[13px] font-medium text-expense">Bạn đang đăng nhập đồng bộ: dữ liệu trên mọi thiết bị dùng tài khoản này cũng sẽ bị xóa.</p>}
       {msg && (
         <p role="status" className={`mt-3 rounded-lg px-3 py-2 text-[13px] font-medium ${msg.kind === "ok" ? "bg-income-soft text-income" : "bg-expense-soft text-expense"}`}>
           {msg.text}

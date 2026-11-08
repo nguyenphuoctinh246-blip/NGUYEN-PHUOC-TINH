@@ -54,6 +54,17 @@ npm run build
 npm start        # cổng 3000; đặt sau Nginx/Caddy để có HTTPS
 ```
 
+## Đồng bộ nhiều thiết bị (đăng nhập bằng đường link)
+
+Mặc định dữ liệu chỉ lưu trên từng trình duyệt. Để nhiều thiết bị cùng đăng nhập và dùng chung dữ liệu:
+
+1. Tạo dự án miễn phí tại [supabase.com](https://supabase.com), mở SQL Editor, dán và chạy toàn bộ file `supabase/schema.sql`.
+2. Lấy **Project URL** và khóa **anon/publishable** ở Project Settings → API (không dùng khóa service_role/secret).
+3. Trên Vercel → Settings → Environment Variables, thêm `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` (xem `.env.example`), rồi **Redeploy**.
+4. Mở `/ung-dung` → mục **Đồng bộ** → tạo tài khoản. Mở cùng link trên thiết bị khác và đăng nhập.
+
+Hướng dẫn có hình ảnh: file Word `Huong-dan-dong-bo-nhieu-thiet-bi.docx`. Kiểm thử logic đồng bộ: `npm test`.
+
 ## Xử lý sự cố thường gặp
 
 | Hiện tượng | Cách xử lý |

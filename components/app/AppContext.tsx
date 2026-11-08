@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Transaction } from "@/lib/types";
 import { useStore, type StoreApi } from "@/hooks/useStore";
+import { useCloud, type CloudApi } from "@/hooks/useCloud";
 import { inPeriod, prevPeriod, totals, type Period } from "@/lib/period";
 import type { IconName } from "../Icon";
 
@@ -14,6 +15,7 @@ export const VIEWS = [
   { id: "tai-khoan", label: "Tài khoản", icon: "bank", color: 9 },
   { id: "bao-cao", label: "Báo cáo", icon: "chart", color: 5 },
   { id: "danh-muc", label: "Danh mục", icon: "tag", color: 2 },
+  { id: "dong-bo", label: "Đồng bộ", icon: "cloud", color: 10 },
   { id: "du-lieu", label: "Dữ liệu", icon: "database", color: 12 },
 ] as const satisfies readonly { id: string; label: string; icon: IconName; color: number }[];
 
@@ -22,6 +24,7 @@ export const isView = (s: string): s is ViewId => VIEWS.some((v) => v.id === s);
 
 interface Ctx {
   s: StoreApi;
+  cloud: CloudApi;
   period: Period;
   setPeriod: (p: Period) => void;
   inView: Transaction[];
@@ -42,6 +45,7 @@ export const useApp = () => {
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const s = useStore();
+  const cloud = useCloud(s);
   const [period, setPeriod] = useState<Period>(() => {
     const d = new Date();
     return { year: d.getFullYear(), month: d.getMonth() + 1 };
@@ -68,7 +72,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const prev = useMemo(() => totals(s.tx.filter((t) => inPeriod(t, prevPeriod(period)))), [s.tx, period]);
 
   const value: Ctx = {
-    s, period, setPeriod, inView, prev, view, go, txModal,
+    s, cloud, period, setPeriod, inView, prev, view, go, txModal,
     openTx: (t = null) => setTxModal({ open: true, editing: t }),
     closeTx: () => setTxModal({ open: false, editing: null }),
   };

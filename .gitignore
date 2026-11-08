@@ -6,3 +6,5 @@ next-env.d.ts
 node_modules
 out
 *.zip
+.test-build.cjs
+.env*.local

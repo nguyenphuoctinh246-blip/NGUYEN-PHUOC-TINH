@@ -10,6 +10,9 @@ import PeriodBar from "./PeriodBar";
 import TxModal from "./TxModal";
 import Overview from "../views/Overview";
 import Categories from "../views/Categories";
+import SyncView from "../views/SyncView";
+import SyncPill from "./SyncPill";
+import { Modal } from "../ui";
 import Transactions from "../views/Transactions";
 import Budgets from "../views/Budgets";
 import Goals from "../views/Goals";
@@ -18,9 +21,9 @@ import Reports from "../views/Reports";
 import DataView from "../views/DataView";
 
 function Shell() {
-  const { view, go, s, openTx, txModal } = useApp();
+  const { view, go, s, openTx, txModal, cloud } = useApp();
   const current = VIEWS.find((v) => v.id === view)!;
-  const showPeriod = view !== "tai-khoan" && view !== "du-lieu" && view !== "muc-tieu" && view !== "danh-muc";
+  const showPeriod = view !== "tai-khoan" && view !== "du-lieu" && view !== "muc-tieu" && view !== "danh-muc" && view !== "dong-bo";
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
@@ -56,6 +59,7 @@ function Shell() {
             </div>
             <h1 className="hidden text-lg font-extrabold tracking-[-0.02em] lg:block">{current.label}</h1>
             <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
+              <SyncPill />
               {showPeriod && <PeriodBar />}
               <Button variant="primary" onClick={() => openTx(null)} className="max-lg:hidden !h-9 !border-0 !bg-gradient-to-r !from-brand-from !to-brand-to"><Icon name="plus" className="size-4" />Thêm giao dịch</Button>
             </div>
@@ -76,7 +80,7 @@ function Shell() {
         <main className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6">
           {!s.ready ? <Skeleton /> : (
             <>
-              {s.hasSamples && view !== "du-lieu" && (
+              {s.hasSamples && view !== "du-lieu" && !cloud.user && (
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line-light bg-accent-soft px-3.5 py-2.5 text-[13px] font-medium text-fg-2">
                   <span>📌 Đang hiển thị dữ liệu mẫu. Thêm giao dịch đầu tiên của bạn, dữ liệu mẫu sẽ tự biến mất.</span>
                   <Button onClick={s.clearSamples} className="!py-1 text-xs">Xóa dữ liệu mẫu</Button>
@@ -89,6 +93,7 @@ function Shell() {
               {view === "tai-khoan" && <Accounts />}
               {view === "bao-cao" && <Reports />}
               {view === "danh-muc" && <Categories />}
+              {view === "dong-bo" && <SyncView />}
               {view === "du-lieu" && <DataView />}
             </>
           )}
@@ -99,6 +104,16 @@ function Shell() {
         <Icon name="plus" className="size-5" />Thêm
       </button>
       {txModal.open && <TxModal />}
+      {cloud.choice && (
+        <Modal title="Gộp dữ liệu trên máy này?" onClose={() => {}}>
+          <div className="flex flex-col gap-4">
+            <p className="m-0 text-[14px] leading-relaxed">Máy này đang có <b>{cloud.choice.localTx}</b> giao dịch chưa đồng bộ, còn tài khoản của bạn đã có <b>{cloud.choice.remoteTx}</b> giao dịch.</p>
+            <Button variant="primary" onClick={() => void cloud.resolveChoice("merge")}>Gộp cả hai (khuyên dùng)</Button>
+            <Button onClick={() => void cloud.resolveChoice("account")}>Chỉ dùng dữ liệu của tài khoản</Button>
+            <p className="m-0 text-xs text-muted">Chọn "Chỉ dùng dữ liệu của tài khoản" sẽ bỏ {cloud.choice.localTx} giao dịch đang có trên máy này.</p>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

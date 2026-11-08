@@ -27,4 +27,6 @@ lib/                    # kiểu dữ liệu, danh mục, tài khoản, ngân s�
 preview/, scripts/      # bản xem trước một file HTML (npm run build:preview)
 ```
 
+Đồng bộ nhiều thiết bị (tùy chọn): `lib/cloud/` (engine đồng bộ, Supabase), `hooks/useCloud.ts`, `supabase/schema.sql`, `tests/`. Xem DEPLOY.md.
+
 Dữ liệu cũ (khóa `vn_expense_v2`) được tự động chuyển sang định dạng mới.

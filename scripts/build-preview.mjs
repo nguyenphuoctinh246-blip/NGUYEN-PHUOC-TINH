@@ -15,8 +15,8 @@ const js = await build({
   format: "iife",
   jsx: "automatic",
   target: "es2020",
-  define: { "process.env.NODE_ENV": '"production"' },
-  alias: { "next/link": resolve("preview/link-shim.tsx") },
+  define: { "process.env.NODE_ENV": '"production"', "process.env.NEXT_PUBLIC_SUPABASE_URL": '""', "process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY": '""' },
+  alias: { "next/link": resolve("preview/link-shim.tsx"), "@supabase/supabase-js": resolve("preview/supabase-stub.ts") },
 });
 
 execFileSync("npx", ["@tailwindcss/cli", "-i", "app/globals.css", "-o", "dist/styles.css", "--minify"], { stdio: "inherit" });
