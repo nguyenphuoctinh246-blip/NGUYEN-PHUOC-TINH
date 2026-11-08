@@ -1,5 +1,5 @@
 import type { Account, Transaction, TxType } from "./types";
-import { CATEGORIES } from "./categories";
+import { catInfo, catList, fallbackCategory } from "./categories";
 import { newId } from "./id";
 
 const HEAD = ["Ngày", "Loại", "Danh mục", "Số tiền", "Ghi chú", "Tài khoản", "Nơi chi/Nguồn thu", "Nhãn"];
@@ -7,7 +7,7 @@ const TYPE_LABEL: Record<TxType, string> = { income: "Thu nhập", expense: "Chi
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const esc = (s: string) => (/[",;\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
-const labelOf = (t: Transaction) => CATEGORIES[t.type].find((c) => c.id === t.category)?.label ?? t.category;
+const labelOf = (t: Transaction) => catInfo(t.category).label;
 
 /** CSV mở được trực tiếp bằng Excel (có BOM UTF-8, dấu phân cách ;) */
 export function toCsv(tx: Transaction[], accounts: Account[] = []): string {
@@ -53,8 +53,8 @@ function parseDate(s: string): string | null {
 
 function findCategory(type: TxType, raw: string): string {
   const key = raw.trim().toLowerCase();
-  const hit = CATEGORIES[type].find((c) => c.label.toLowerCase() === key || c.id === key);
-  return hit ? hit.id : type === "income" ? "thu_khac" : "chi_khac";
+  const hit = catList(type).find((c) => c.label.toLowerCase() === key || c.id === key);
+  return hit ? hit.id : fallbackCategory(type);
 }
 
 export interface ImportResult { items: Transaction[]; skipped: number }
@@ -97,7 +97,7 @@ export function parseJson(text: string, accounts: Account[] = []): ImportResult 
       id: newId(),
       type,
       amount: Math.round(amount),
-      category: typeof r.category === "string" ? r.category : type === "income" ? "thu_khac" : "chi_khac",
+      category: typeof r.category === "string" && catList(type).some((c) => c.id === r.category) ? r.category : fallbackCategory(type),
       date,
       note: typeof r.note === "string" ? r.note : "",
       account: typeof r.account === "string" && accounts.some((a) => a.id === r.account) ? r.account : defaultAcc,

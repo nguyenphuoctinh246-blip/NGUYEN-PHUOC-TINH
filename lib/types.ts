@@ -19,6 +19,9 @@ export interface Category {
   id: string;
   label: string;
   icon: string;
+  type: TxType;
+  /** 1..12, ứng với biến màu --cat-N (tự đổi theo giao diện sáng/tối) */
+  color: number;
 }
 
 export type AccountKind = "cash" | "bank" | "ewallet" | "credit" | "saving";
@@ -47,4 +50,5 @@ export interface Store {
   /** hạn mức chi mỗi tháng theo id danh mục chi */
   budgets: Record<string, number>;
   goals: Goal[];
+  categories: Category[];
 }

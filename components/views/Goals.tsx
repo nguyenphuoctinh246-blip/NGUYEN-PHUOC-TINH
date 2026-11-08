@@ -62,7 +62,7 @@ function GoalCard({ g, onEdit }: { g: Goal; onEdit: () => void }) {
         </div>
       </div>
       <div className="mt-4 flex items-baseline justify-between gap-2"><span className="font-mono text-xl font-bold text-income">{fmt(g.saved)}đ</span><span className="font-mono text-xs text-muted">/ {fmt(g.target)}đ</span></div>
-      <div className="mt-2"><Progress pct={pct} tone={done ? "income" : "accent"} /></div>
+      <div className="mt-2"><Progress pct={pct} tone={done ? "income" : "brand"} /></div>
       <div className="mt-1.5 flex justify-between text-xs text-muted"><span>{Math.min(pct, 100).toFixed(0)}%</span>{!done && <span>Còn {fmt(g.target - g.saved)}đ</span>}</div>
       {need !== null && <p className="mt-2 rounded-lg bg-surface-alt px-3 py-2 text-xs text-fg-2">Cần tiết kiệm khoảng <b className="font-mono">{fmt(need)}đ</b>/tháng để đạt đúng hạn.</p>}
       {!done && (

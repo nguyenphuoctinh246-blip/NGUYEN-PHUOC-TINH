@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import type { Transaction } from "@/lib/types";
 import { fmt, fmtK } from "@/lib/format";
 import { monthlyTotals } from "@/lib/period";
+import { CardTitle } from "./ui";
 
 type Kind = "inc" | "exp";
 interface Tip { x: number; y: number; month: number; kind: Kind; val: number }
@@ -53,7 +54,7 @@ export default function MonthlyChart({
   return (
     <section className="card min-w-0 px-4 py-[18px]">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="card-title">Thu chi theo tháng, năm {year}</h2>
+        <CardTitle icon="chart" color={1}>Thu chi theo tháng, năm {year}</CardTitle>
         <div className="flex gap-3.5 text-[11px] text-muted">
           <span className="flex items-center gap-1"><span className="inline-block h-1 w-2.5 rounded-sm bg-income" />Thu</span>
           <span className="flex items-center gap-1"><span className="inline-block h-1 w-2.5 rounded-sm bg-expense" />Chi</span>

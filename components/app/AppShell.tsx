@@ -9,6 +9,7 @@ import { AppProvider, useApp, VIEWS } from "./AppContext";
 import PeriodBar from "./PeriodBar";
 import TxModal from "./TxModal";
 import Overview from "../views/Overview";
+import Categories from "../views/Categories";
 import Transactions from "../views/Transactions";
 import Budgets from "../views/Budgets";
 import Goals from "../views/Goals";
@@ -19,27 +20,30 @@ import DataView from "../views/DataView";
 function Shell() {
   const { view, go, s, openTx, txModal } = useApp();
   const current = VIEWS.find((v) => v.id === view)!;
-  const showPeriod = view !== "tai-khoan" && view !== "du-lieu" && view !== "muc-tieu";
+  const showPeriod = view !== "tai-khoan" && view !== "du-lieu" && view !== "muc-tieu" && view !== "danh-muc";
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-screen flex-col border-r border-line-light bg-surface px-3 py-5 lg:flex">
-        <div className="px-2 pb-6"><AppLink href="/" aria-label="Trang giới thiệu"><Logo /></AppLink></div>
-        <nav aria-label="Chức năng" className="flex flex-1 flex-col gap-0.5">
+      <aside className="sticky top-0 hidden h-screen flex-col bg-side-bg px-3 py-5 text-side-fg lg:flex">
+        <div className="px-2 pb-6"><AppLink href="/" aria-label="Trang giới thiệu"><Logo light /></AppLink></div>
+        <nav aria-label="Chức năng" className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
           {VIEWS.map((v) => {
             const active = v.id === view;
+            const c = `color-mix(in srgb, var(--cat-${v.color}) 62%, white)`;
             return (
               <button key={v.id} type="button" onClick={() => go(v.id)} aria-current={active ? "page" : undefined}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-none px-3 py-2.5 text-left text-[14px] font-medium transition-colors ${active ? "bg-accent-soft font-semibold text-accent" : "bg-transparent text-fg-2 hover:bg-surface-alt hover:text-fg"}`}>
-                <Icon name={v.icon} className="size-[18px]" />
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-none px-2.5 py-2 text-left text-[14px] font-medium transition-colors ${active ? "bg-white/12 font-semibold text-white" : "bg-transparent text-side-fg hover:bg-white/7 hover:text-white"}`}>
+                <span className="flex size-7 items-center justify-center rounded-lg" style={{ background: `color-mix(in srgb, var(--cat-${v.color}) ${active ? 38 : 22}%, transparent)`, color: c }}>
+                  <Icon name={v.icon} className="size-4" />
+                </span>
                 {v.label}
               </button>
             );
           })}
         </nav>
-        <div className="flex items-center justify-between gap-2 border-t border-line-light px-1 pt-4">
-          <AppLink href="/" className="text-[13px] font-medium text-muted hover:text-fg">← Trang giới thiệu</AppLink>
-          <ThemeToggle />
+        <div className="flex items-center justify-between gap-2 border-t border-side-line px-1 pt-4">
+          <AppLink href="/" className="text-[13px] font-medium text-side-fg hover:text-white">← Trang giới thiệu</AppLink>
+          <ThemeToggle onDark />
         </div>
       </aside>
 
@@ -53,7 +57,7 @@ function Shell() {
             <h1 className="hidden text-lg font-extrabold tracking-[-0.02em] lg:block">{current.label}</h1>
             <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
               {showPeriod && <PeriodBar />}
-              <Button variant="primary" onClick={() => openTx(null)} className="max-lg:hidden !h-9"><Icon name="plus" className="size-4" />Thêm giao dịch</Button>
+              <Button variant="primary" onClick={() => openTx(null)} className="max-lg:hidden !h-9 !border-0 !bg-gradient-to-r !from-brand-from !to-brand-to"><Icon name="plus" className="size-4" />Thêm giao dịch</Button>
             </div>
           </div>
           <nav aria-label="Chức năng" className="flex gap-1 overflow-x-auto px-4 pb-2 lg:hidden">
@@ -62,7 +66,7 @@ function Shell() {
               return (
                 <button key={v.id} type="button" onClick={() => go(v.id)} aria-current={active ? "page" : undefined}
                   className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-semibold ${active ? "border-accent bg-accent text-white" : "border-line bg-surface text-fg-2"}`}>
-                  <Icon name={v.icon} className="size-3.5" />{v.label}
+                  <span style={{ color: active ? "inherit" : `var(--cat-${v.color})` }}><Icon name={v.icon} className="size-3.5" /></span>{v.label}
                 </button>
               );
             })}
@@ -84,13 +88,14 @@ function Shell() {
               {view === "muc-tieu" && <Goals />}
               {view === "tai-khoan" && <Accounts />}
               {view === "bao-cao" && <Reports />}
+              {view === "danh-muc" && <Categories />}
               {view === "du-lieu" && <DataView />}
             </>
           )}
         </main>
       </div>
       <button type="button" onClick={() => openTx(null)} aria-label="Thêm giao dịch"
-        className="fixed right-4 bottom-[max(16px,env(safe-area-inset-bottom))] z-40 flex h-12 cursor-pointer items-center gap-2 rounded-full border-none bg-accent px-5 text-sm font-semibold text-white shadow-pop lg:hidden">
+        className="fixed right-4 bottom-[max(16px,env(safe-area-inset-bottom))] z-40 flex h-12 cursor-pointer items-center gap-2 rounded-full border-none bg-gradient-to-r from-brand-from to-brand-to px-5 text-sm font-semibold text-white shadow-pop lg:hidden">
         <Icon name="plus" className="size-5" />Thêm
       </button>
       {txModal.open && <TxModal />}

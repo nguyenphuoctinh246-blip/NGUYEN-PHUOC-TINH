@@ -1,14 +1,34 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Icon from "./Icon";
+import Icon, { type IconName } from "./Icon";
 
-export function Card({ title, action, children, className = "" }: { title?: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
+/** Ô biểu tượng nền nhạt cùng tông màu (color = số 1..12 của biến --cat-N) */
+export function Chip({ icon, color, size = "md" }: { icon: IconName; color: number; size?: "sm" | "md" }) {
+  const c = `var(--cat-${color})`;
+  return (
+    <span className={`flex shrink-0 items-center justify-center rounded-[10px] ${size === "sm" ? "size-7" : "size-9"}`} style={{ background: `color-mix(in srgb, ${c} 16%, transparent)`, color: c }}>
+      <Icon name={icon} className={size === "sm" ? "size-4" : "size-[18px]"} />
+    </span>
+  );
+}
+
+/** Tiêu đề thẻ kèm ô biểu tượng màu */
+export function CardTitle({ icon, color, children }: { icon: IconName; color: number; children: React.ReactNode }) {
+  return (
+    <h2 className="card-title flex items-center gap-2.5">
+      <Chip icon={icon} color={color} size="sm" />
+      {children}
+    </h2>
+  );
+}
+
+export function Card({ title, icon, color = 1, action, children, className = "" }: { title?: string; icon?: IconName; color?: number; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
     <section className={`card min-w-0 px-4 py-[18px] ${className}`}>
       {(title || action) && (
         <div className="mb-3.5 flex items-center justify-between gap-2">
-          {title && <h2 className="card-title">{title}</h2>}
+          {title && (icon ? <CardTitle icon={icon} color={color}>{title}</CardTitle> : <h2 className="card-title">{title}</h2>)}
           {action}
         </div>
       )}
@@ -17,8 +37,8 @@ export function Card({ title, action, children, className = "" }: { title?: stri
   );
 }
 
-export function Progress({ pct, tone = "accent" }: { pct: number; tone?: "accent" | "income" | "expense" | "warn" }) {
-  const bg = { accent: "bg-accent", income: "bg-income", expense: "bg-expense", warn: "bg-warn" }[tone];
+export function Progress({ pct, tone = "accent" }: { pct: number; tone?: "accent" | "income" | "expense" | "warn" | "brand" }) {
+  const bg = { accent: "bg-accent", income: "bg-income", expense: "bg-expense", warn: "bg-warn", brand: "bg-gradient-to-r from-brand-from to-income" }[tone];
   return (
     <div className="h-2 overflow-hidden rounded-full bg-surface-alt" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
       <div className={`h-full rounded-full transition-[width] duration-500 ease-out ${bg}`} style={{ width: `${Math.min(Math.max(pct, 0), 100)}%` }} />

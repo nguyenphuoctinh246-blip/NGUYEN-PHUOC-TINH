@@ -2,7 +2,7 @@
 
 import { accountBalance } from "@/lib/accounts";
 import { budgetRows, statusTone } from "@/lib/budget";
-import { catInfo } from "@/lib/categories";
+import { catColor, catInfo, tint } from "@/lib/categories";
 import { fmt, fmtDate, fmtK, pctChange } from "@/lib/format";
 import { prevLabel, totals } from "@/lib/period";
 import { insights } from "@/lib/stats";
@@ -10,7 +10,8 @@ import { useApp } from "../app/AppContext";
 import BalanceTrend from "../BalanceTrend";
 import BreakdownChart from "../BreakdownChart";
 import MonthlyChart from "../MonthlyChart";
-import { Button, Card, Empty, Pill, Progress } from "../ui";
+import { Button, Card, Chip, Empty, Pill, Progress } from "../ui";
+import type { IconName } from "../Icon";
 
 function Delta({ value, goodWhenUp, label }: { value: number | null; goodWhenUp: boolean; label: string }) {
   if (value === null) return <span className="text-[11px] text-muted">Chưa có dữ liệu {label}</span>;
@@ -22,10 +23,13 @@ function Delta({ value, goodWhenUp, label }: { value: number | null; goodWhenUp:
   );
 }
 
-function Kpi({ label, value, tone, children }: { label: string; value: string; tone?: string; children?: React.ReactNode }) {
+function Kpi({ label, value, tone, icon, color, children }: { label: string; value: string; tone?: string; icon: IconName; color: number; children?: React.ReactNode }) {
   return (
     <div className="card min-w-0 px-4 py-4">
-      <div className="text-[11px] font-semibold tracking-[0.06em] text-muted uppercase">{label}</div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-semibold tracking-[0.06em] text-muted uppercase">{label}</span>
+        <Chip icon={icon} color={color} size="sm" />
+      </div>
       <div className={`mt-1.5 font-mono text-[17px] leading-tight font-bold whitespace-nowrap sm:text-[22px] ${tone ?? ""}`}>{value}</div>
       <div className="mt-1.5 min-h-4">{children}</div>
     </div>
@@ -62,25 +66,31 @@ export default function Overview() {
       )}
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Chỉ số chính">
-        <Kpi label="Tổng tài sản" value={fmt(netWorth) + "đ"} tone={netWorth < 0 ? "text-expense" : ""}>
-          <span className="text-[11px] text-muted">{s.accounts.length} tài khoản</span>
-        </Kpi>
-        <Kpi label="Thu nhập" value={"+" + fmt(t.inc)} tone="text-income"><Delta value={pctChange(t.inc, prev.inc)} goodWhenUp label={pl} /></Kpi>
-        <Kpi label="Chi tiêu" value={"-" + fmt(t.exp)} tone="text-expense"><Delta value={pctChange(t.exp, prev.exp)} goodWhenUp={false} label={pl} /></Kpi>
-        <Kpi label="Tiết kiệm trong kỳ" value={(t.bal >= 0 ? "+" : "-") + fmt(Math.abs(t.bal))} tone={t.bal >= 0 ? "text-income" : "text-expense"}>
+        <div className="card relative col-span-2 min-w-0 overflow-hidden border-0 bg-gradient-to-br from-brand-from to-brand-to px-5 py-4 text-white lg:col-span-1">
+          <div aria-hidden="true" className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-white/10" />
+          <div aria-hidden="true" className="pointer-events-none absolute -right-2 -bottom-10 size-24 rounded-full bg-white/10" />
+          <div className="relative">
+            <span className="text-[11px] font-semibold tracking-[0.06em] uppercase opacity-80">Tổng tài sản</span>
+            <div className="mt-1.5 font-mono text-[22px] leading-tight font-bold whitespace-nowrap">{fmt(netWorth)}đ</div>
+            <div className="mt-1.5 text-[11px] opacity-80">{s.accounts.length} tài khoản</div>
+          </div>
+        </div>
+        <Kpi label="Thu nhập" icon="up" color={3} value={"+" + fmt(t.inc)} tone="text-income"><Delta value={pctChange(t.inc, prev.inc)} goodWhenUp label={pl} /></Kpi>
+        <Kpi label="Chi tiêu" icon="down" color={8} value={"-" + fmt(t.exp)} tone="text-expense"><Delta value={pctChange(t.exp, prev.exp)} goodWhenUp={false} label={pl} /></Kpi>
+        <Kpi label="Tiết kiệm trong kỳ" icon="wallet" color={1} value={(t.bal >= 0 ? "+" : "-") + fmt(Math.abs(t.bal))} tone={t.bal >= 0 ? "text-income" : "text-expense"}>
           <span className="text-[11px] text-muted">{ins.savingsRate === null ? "Chưa có thu nhập" : `Tỷ lệ tiết kiệm ${ins.savingsRate}%`}</span>
         </Kpi>
       </section>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <MonthlyChart transactions={s.tx} year={period.year} selectedMonth={period.month} onSelect={(month) => setPeriod({ ...period, month })} />
-        <Card title="Ngân sách" action={<Button variant="ghost" className="!px-2 !py-1 text-xs" onClick={() => go("ngan-sach")}>Xem tất cả</Button>}>
+        <Card title="Ngân sách" icon="pie" color={4} action={<Button variant="ghost" className="!px-2 !py-1 text-xs" onClick={() => go("ngan-sach")}>Xem tất cả</Button>}>
           {budgets.length === 0 ? <p className="py-6 text-center text-[13px] text-muted">Chưa đặt hạn mức cho danh mục nào.</p> : (
             <ul className="flex flex-col gap-3.5">
               {budgets.map((r) => (
                 <li key={r.cat}>
                   <div className="mb-1 flex items-baseline justify-between gap-2 text-[13px]">
-                    <span className="truncate font-medium">{catInfo(r.cat).icon} {catInfo(r.cat).label}</span>
+                    <span className="flex min-w-0 items-center gap-2 truncate font-medium"><span className="flex size-6 shrink-0 items-center justify-center rounded-md text-xs" style={{ background: tint(catColor(r.cat)) }}>{catInfo(r.cat).icon}</span>{catInfo(r.cat).label}</span>
                     <span className="shrink-0 font-mono text-xs text-fg-2">{fmtK(r.spent)} / {fmtK(r.limit)}</span>
                   </div>
                   <Progress pct={r.pct} tone={statusTone(r.status)} />
@@ -93,7 +103,7 @@ export default function Overview() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <BreakdownChart transactions={inView} type="expense" />
-        <Card title="Điểm nhấn của kỳ">
+        <Card title="Điểm nhấn của kỳ" icon="zap" color={7}>
           {inView.length === 0 ? <p className="py-6 text-center text-[13px] text-muted">Chưa có dữ liệu để phân tích.</p> : (
             <dl className="flex flex-col divide-y divide-line-light text-[13px]">
               <Row k="Tỷ lệ tiết kiệm" v={ins.savingsRate === null ? "–" : `${ins.savingsRate}%`} pill={ins.savingsRate === null ? undefined : ins.savingsRate >= 20 ? <Pill tone="income">Tốt</Pill> : ins.savingsRate >= 0 ? <Pill tone="warn">Cần cải thiện</Pill> : <Pill tone="expense">Chi vượt thu</Pill>} />
@@ -109,13 +119,13 @@ export default function Overview() {
       <BalanceTrend transactions={inView} />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Card title="Giao dịch gần đây" action={<Button variant="ghost" className="!px-2 !py-1 text-xs" onClick={() => go("giao-dich")}>Xem tất cả</Button>}>
+        <Card title="Giao dịch gần đây" icon="list" color={1} action={<Button variant="ghost" className="!px-2 !py-1 text-xs" onClick={() => go("giao-dich")}>Xem tất cả</Button>}>
           {recent.length === 0 ? <Empty icon="🧾" title="Chưa có giao dịch trong kỳ này" /> : (
             <ul className="-mx-2 flex flex-col">
               {recent.map((x) => (
                 <li key={x.id}>
                   <button type="button" onClick={() => openTx(x)} className="flex w-full cursor-pointer items-center gap-3 rounded-lg border-none bg-transparent px-2 py-2.5 text-left hover:bg-surface-alt">
-                    <span className={`flex size-9 shrink-0 items-center justify-center rounded-[10px] text-base ${x.type === "income" ? "bg-income-soft" : "bg-expense-soft"}`}>{catInfo(x.category).icon}</span>
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] text-base" style={{ background: tint(catColor(x.category)) }}>{catInfo(x.category).icon}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13px] font-medium">{x.payee || catInfo(x.category).label}</span>
                       <span className="block truncate text-[11px] text-muted">{fmtDate(x.date)} · {catInfo(x.category).label}{x.note ? ` · ${x.note}` : ""}</span>
@@ -127,13 +137,13 @@ export default function Overview() {
             </ul>
           )}
         </Card>
-        <Card title="Mục tiêu tiết kiệm" action={<Button variant="ghost" className="!px-2 !py-1 text-xs" onClick={() => go("muc-tieu")}>Xem tất cả</Button>}>
+        <Card title="Mục tiêu tiết kiệm" icon="target" color={3} action={<Button variant="ghost" className="!px-2 !py-1 text-xs" onClick={() => go("muc-tieu")}>Xem tất cả</Button>}>
           {s.goals.length === 0 ? <p className="py-6 text-center text-[13px] text-muted">Chưa có mục tiêu nào.</p> : (
             <ul className="flex flex-col gap-4">
               {s.goals.slice(0, 3).map((g) => (
                 <li key={g.id}>
                   <div className="mb-1 flex justify-between gap-2 text-[13px]"><span className="truncate font-medium">{g.name}</span><span className="shrink-0 font-mono text-xs text-fg-2">{Math.round((g.saved / g.target) * 100)}%</span></div>
-                  <Progress pct={(g.saved / g.target) * 100} tone="income" />
+                  <Progress pct={(g.saved / g.target) * 100} tone="brand" />
                   <div className="mt-1 text-[11px] text-muted">{fmtK(g.saved)} / {fmtK(g.target)}</div>
                 </li>
               ))}

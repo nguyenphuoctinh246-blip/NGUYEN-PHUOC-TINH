@@ -42,9 +42,9 @@ export default function Reports() {
       </div>
       <BalanceTrend transactions={inView} />
       <div className="grid gap-4 md:grid-cols-3">
-        <Card title="Chi nhiều nhất tại"><RankList rows={payees} color="var(--cat-1)" /></Card>
-        <Card title="Chi theo tài khoản"><RankList rows={accounts} color="var(--cat-3)" /></Card>
-        <Card title="Chi theo nhãn"><RankList rows={tags} color="var(--cat-7)" /></Card>
+        <Card title="Chi nhiều nhất tại" icon="bank" color={1}><RankList rows={payees} color="var(--cat-1)" /></Card>
+        <Card title="Chi theo tài khoản" icon="wallet" color={3}><RankList rows={accounts} color="var(--cat-3)" /></Card>
+        <Card title="Chi theo nhãn" icon="tag" color={7}><RankList rows={tags} color="var(--cat-7)" /></Card>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { Transaction } from "@/lib/types";
 import { fmt } from "@/lib/format";
 import { monthlyTotals } from "@/lib/period";
+import { CardTitle } from "./ui";
 
 export default function MonthlyTable({
   transactions,
@@ -26,7 +27,7 @@ export default function MonthlyTable({
   return (
     <section className="card min-w-0 overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-[18px] pb-3">
-        <h2 className="card-title">Báo cáo từng tháng, năm {year}</h2>
+        <CardTitle icon="list" color={5}>Báo cáo từng tháng, năm {year}</CardTitle>
         <button type="button" onClick={() => onSelect(0)} aria-pressed={selectedMonth === 0}
           className="cursor-pointer rounded-md border border-line bg-surface px-2.5 py-1 text-xs font-medium text-fg-2 hover:bg-surface-alt">
           Xem cả năm

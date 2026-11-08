@@ -20,6 +20,11 @@
   --expense-soft: rgba(220, 38, 38, 0.07);
   --cat-1: #2a78d6; --cat-2: #eb6834; --cat-3: #1baf7a; --cat-4: #eda100;
   --cat-5: #e87ba4; --cat-6: #008300; --cat-7: #6250d6; --cat-8: #e34948;
+  --side-bg: #0f1a3a;
+  --side-fg: #b9c5e3;
+  --side-line: rgba(255, 255, 255, 0.1);
+  --brand-from: #2563eb;
+  --brand-to: #7c3aed;
   --warn: #d97706;
   --warn-soft: rgba(217, 119, 6, 0.1);
   --cat-9: #0e9fb5; --cat-10: #a05bd1; --cat-11: #6b7a2a; --cat-12: #8a8980;
@@ -48,6 +53,11 @@
     --expense-soft: rgba(248, 113, 113, 0.08);
     --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500;
     --cat-5: #d55181; --cat-6: #008300; --cat-7: #9085e9; --cat-8: #e66767;
+    --side-bg: #0a1020;
+    --side-fg: #aab6d4;
+    --side-line: rgba(255, 255, 255, 0.08);
+    --brand-from: #3b6df0;
+    --brand-to: #8b5cf6;
     --warn: #fbbf24;
     --warn-soft: rgba(251, 191, 36, 0.12);
     --cat-9: #2bb8cf; --cat-10: #b57ae0; --cat-11: #9aab4a; --cat-12: #8f8e80;
@@ -74,6 +84,11 @@
   --expense-soft: rgba(248, 113, 113, 0.08);
   --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500;
   --cat-5: #d55181; --cat-6: #008300; --cat-7: #9085e9; --cat-8: #e66767;
+  --side-bg: #0a1020;
+  --side-fg: #aab6d4;
+  --side-line: rgba(255, 255, 255, 0.08);
+  --brand-from: #3b6df0;
+  --brand-to: #8b5cf6;
   --warn: #fbbf24;
   --warn-soft: rgba(251, 191, 36, 0.12);
   --cat-9: #2bb8cf; --cat-10: #b57ae0; --cat-11: #9aab4a; --cat-12: #8f8e80;
@@ -98,6 +113,11 @@
   --color-income-soft: var(--income-soft);
   --color-expense: var(--expense);
   --color-expense-soft: var(--expense-soft);
+  --color-side-bg: var(--side-bg);
+  --color-side-fg: var(--side-fg);
+  --color-side-line: var(--side-line);
+  --color-brand-from: var(--brand-from);
+  --color-brand-to: var(--brand-to);
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
   --shadow-card: var(--shadow-card);

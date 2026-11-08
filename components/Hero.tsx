@@ -10,7 +10,7 @@ export default function Hero() {
     <section className="relative overflow-hidden">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[560px] bg-[radial-gradient(60%_60%_at_50%_0%,color-mix(in_srgb,var(--accent)_16%,transparent),transparent)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[560px] bg-[radial-gradient(50%_60%_at_25%_0%,color-mix(in_srgb,var(--brand-from)_20%,transparent),transparent),radial-gradient(45%_55%_at_80%_10%,color-mix(in_srgb,var(--brand-to)_18%,transparent),transparent)]"
       />
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pt-14 pb-16 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-20 lg:pb-24">
         <div className="animate-fade-up">
@@ -20,13 +20,13 @@ export default function Hero() {
           </span>
           <h1 className="mt-5 text-[34px] leading-[1.12] font-extrabold tracking-[-0.03em] sm:text-5xl lg:text-[56px]">
             Biết tiền đi đâu,{" "}
-            <span className="bg-gradient-to-r from-accent to-income bg-clip-text text-transparent">giữ tiền được lâu</span>
+            <span className="bg-gradient-to-r from-brand-from to-brand-to bg-clip-text text-transparent">giữ tiền được lâu</span>
           </h1>
           <p className="mt-5 max-w-[520px] text-base leading-relaxed text-fg-2 sm:text-lg">
             Ghi thu chi trong vài giây, đặt ngân sách theo danh mục, theo dõi mục tiêu tiết kiệm và xem báo cáo theo từng tháng, từng năm. Dữ liệu nằm hoàn toàn trên thiết bị của bạn.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <AppLink href="/ung-dung" className="inline-flex items-center gap-2 rounded-[10px] bg-accent px-5 py-3 text-sm font-semibold text-white shadow-pop transition-opacity hover:opacity-90">
+            <AppLink href="/ung-dung" className="inline-flex items-center gap-2 rounded-[10px] bg-gradient-to-r from-brand-from to-brand-to px-5 py-3 text-sm font-semibold text-white shadow-pop transition-opacity hover:opacity-90">
               Mở ứng dụng <Icon name="arrow" className="size-4" />
             </AppLink>
             <a href="#tinh-nang" className="rounded-[10px] border border-line bg-surface px-5 py-3 text-sm font-semibold transition-colors hover:bg-surface-alt">

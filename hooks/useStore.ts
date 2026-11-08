@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { Account, Goal, Store, Transaction } from "@/lib/types";
+import type { Account, Category, Goal, Store, Transaction } from "@/lib/types";
+import { DEFAULT_CATEGORIES, setCategories } from "@/lib/categories";
 import { DEFAULT_ACCOUNTS } from "@/lib/accounts";
 import { loadStore, sampleStore, saveStore } from "@/lib/storage";
 
-const EMPTY: Store = { tx: [], accounts: DEFAULT_ACCOUNTS, budgets: {}, goals: [] };
+const EMPTY: Store = { tx: [], accounts: DEFAULT_ACCOUNTS, budgets: {}, goals: [], categories: DEFAULT_CATEGORIES };
 
 /**
  * Toàn bộ dữ liệu ứng dụng, lưu trong localStorage.
@@ -14,6 +15,8 @@ const EMPTY: Store = { tx: [], accounts: DEFAULT_ACCOUNTS, budgets: {}, goals: [
 export function useStore() {
   const [store, setStore] = useState<Store>(EMPTY);
   const [ready, setReady] = useState(false);
+  // Đồng bộ danh mục cho các hàm tra cứu catInfo/catColor (idempotent, an toàn khi render lại)
+  setCategories(store.categories);
 
   useEffect(() => {
     setStore(loadStore());
@@ -56,11 +59,29 @@ export function useStore() {
   })), []);
   const removeGoal = useCallback((id: string) => setStore((s) => ({ ...s, goals: s.goals.filter((g) => g.id !== id) })), []);
 
+  const saveCategory = useCallback((c: Category) => setStore((s) => ({
+    ...s,
+    categories: s.categories.some((x) => x.id === c.id) ? s.categories.map((x) => (x.id === c.id ? c : x)) : [...s.categories, c],
+  })), []);
+
+  /** Xóa danh mục: chuyển các giao dịch đang dùng sang `moveTo`, bỏ ngân sách của danh mục cũ */
+  const removeCategory = useCallback((id: string, moveTo: string) => setStore((s) => {
+    const budgets = { ...s.budgets };
+    delete budgets[id];
+    return { ...s, budgets, categories: s.categories.filter((c) => c.id !== id), tx: s.tx.map((t) => (t.category === id ? { ...t, category: moveTo } : t)) };
+  }), []);
+
+  /** Thêm lại các danh mục mặc định đã bị xóa, giữ nguyên danh mục hiện có */
+  const restoreDefaultCategories = useCallback(() => setStore((s) => ({
+    ...s,
+    categories: [...s.categories, ...DEFAULT_CATEGORIES.filter((d) => !s.categories.some((c) => c.id === d.id))],
+  })), []);
+
   const clearSamples = useCallback(() => setStore((s) => dropSamples(s)), []);
   const clearAll = useCallback(() => setStore((s) => ({ ...s, tx: [], goals: [] })), []);
   const restoreSamples = useCallback(() => setStore(sampleStore()), []);
 
-  return { ...store, ready, hasSamples, addTx, addManyTx, updateTx, removeTx, setBudget, saveAccount, removeAccount, saveGoal, removeGoal, clearSamples, clearAll, restoreSamples };
+  return { ...store, ready, hasSamples, addTx, addManyTx, updateTx, removeTx, setBudget, saveAccount, removeAccount, saveGoal, removeGoal, saveCategory, removeCategory, restoreDefaultCategories, clearSamples, clearAll, restoreSamples };
 }
 
 export type StoreApi = ReturnType<typeof useStore>;

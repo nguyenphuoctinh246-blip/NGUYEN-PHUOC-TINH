@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import type { Transaction, TxType } from "@/lib/types";
-import { catColor, catInfo } from "@/lib/categories";
+import { catColor, catInfo, tint } from "@/lib/categories";
 import { fmt } from "@/lib/format";
+import { CardTitle } from "./ui";
 
 const COPY: Record<TxType, { title: string; empty: string; total: string; color: string }> = {
   expense: { title: "Phân bổ chi tiêu", empty: "Chưa có dữ liệu chi tiêu", total: "Tổng chi tiêu", color: "text-expense" },
@@ -20,7 +21,7 @@ export default function BreakdownChart({ transactions, type }: { transactions: T
   if (total === 0) {
     return (
       <section className="card min-w-0 px-4 py-[18px]">
-        <h2 className="card-title">{copy.title}</h2>
+        <CardTitle icon={type === "income" ? "up" : "down"} color={type === "income" ? 3 : 8}>{copy.title}</CardTitle>
         <p className="py-8 text-center text-[13px] text-muted">{copy.empty}</p>
       </section>
     );
@@ -40,7 +41,7 @@ export default function BreakdownChart({ transactions, type }: { transactions: T
 
   return (
     <section className="card min-w-0 px-4 py-[18px]">
-      <h2 className="card-title mb-3.5">{copy.title}</h2>
+      <div className="mb-3.5"><CardTitle icon={type === "income" ? "up" : "down"} color={type === "income" ? 3 : 8}>{copy.title}</CardTitle></div>
 
       <div className="mb-[18px] flex h-2 gap-0.5 overflow-hidden rounded bg-surface-alt">
         {sorted.map((c) => (
@@ -64,7 +65,7 @@ export default function BreakdownChart({ transactions, type }: { transactions: T
             >
               <div className="mb-[3px] flex items-baseline justify-between gap-2">
                 <span className="flex items-center gap-1.5 text-[13px] font-medium text-fg-2">
-                  <span className="text-sm">{c.info.icon}</span>
+                  <span className="flex size-6 items-center justify-center rounded-md text-xs" style={{ background: tint(catColor(c.id)) }}>{c.info.icon}</span>
                   {c.info.label}
                 </span>
                 <span className={`font-mono text-xs font-medium transition-colors ${isH ? "text-fg" : "text-fg-2"}`}>

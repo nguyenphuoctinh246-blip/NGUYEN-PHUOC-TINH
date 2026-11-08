@@ -7,14 +7,15 @@ import { inPeriod, prevPeriod, totals, type Period } from "@/lib/period";
 import type { IconName } from "../Icon";
 
 export const VIEWS = [
-  { id: "tong-quan", label: "Tổng quan", icon: "home" },
-  { id: "giao-dich", label: "Giao dịch", icon: "list" },
-  { id: "ngan-sach", label: "Ngân sách", icon: "pie" },
-  { id: "muc-tieu", label: "Mục tiêu", icon: "target" },
-  { id: "tai-khoan", label: "Tài khoản", icon: "bank" },
-  { id: "bao-cao", label: "Báo cáo", icon: "chart" },
-  { id: "du-lieu", label: "Dữ liệu", icon: "database" },
-] as const satisfies readonly { id: string; label: string; icon: IconName }[];
+  { id: "tong-quan", label: "Tổng quan", icon: "home", color: 1 },
+  { id: "giao-dich", label: "Giao dịch", icon: "list", color: 7 },
+  { id: "ngan-sach", label: "Ngân sách", icon: "pie", color: 4 },
+  { id: "muc-tieu", label: "Mục tiêu", icon: "target", color: 3 },
+  { id: "tai-khoan", label: "Tài khoản", icon: "bank", color: 9 },
+  { id: "bao-cao", label: "Báo cáo", icon: "chart", color: 5 },
+  { id: "danh-muc", label: "Danh mục", icon: "tag", color: 2 },
+  { id: "du-lieu", label: "Dữ liệu", icon: "database", color: 12 },
+] as const satisfies readonly { id: string; label: string; icon: IconName; color: number }[];
 
 export type ViewId = (typeof VIEWS)[number]["id"];
 export const isView = (s: string): s is ViewId => VIEWS.some((v) => v.id === s);

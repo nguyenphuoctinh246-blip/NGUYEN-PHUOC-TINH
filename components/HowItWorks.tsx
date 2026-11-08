@@ -14,7 +14,7 @@ export default function HowItWorks() {
         <ol className="mt-12 grid gap-6 md:grid-cols-3">
           {STEPS.map(([n, t, d]) => (
             <li key={n} className="relative rounded-2xl border border-line-light bg-surface p-6">
-              <span className="flex size-9 items-center justify-center rounded-full bg-accent font-mono text-sm font-bold text-white">{n}</span>
+              <span className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-from to-brand-to font-mono text-sm font-bold text-white">{n}</span>
               <h3 className="mt-4 text-base font-bold">{t}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-fg-2">{d}</p>
             </li>

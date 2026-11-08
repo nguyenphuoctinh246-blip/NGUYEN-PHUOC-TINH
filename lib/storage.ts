@@ -1,5 +1,6 @@
 import type { Store, Transaction } from "./types";
 import { DEFAULT_ACCOUNTS } from "./accounts";
+import { DEFAULT_CATEGORIES } from "./categories";
 import { DEFAULT_BUDGETS, getSamples } from "./samples";
 
 const KEY = "vn_expense_v3";
@@ -23,7 +24,7 @@ export function normalizeTx(raw: Partial<Transaction>): Transaction {
 
 export function sampleStore(): Store {
   const s = getSamples();
-  return { tx: s.tx, accounts: DEFAULT_ACCOUNTS, budgets: DEFAULT_BUDGETS, goals: s.goals };
+  return { tx: s.tx, accounts: DEFAULT_ACCOUNTS, budgets: DEFAULT_BUDGETS, goals: s.goals, categories: DEFAULT_CATEGORIES };
 }
 
 export function loadStore(): Store {
@@ -36,13 +37,14 @@ export function loadStore(): Store {
         accounts: d.accounts?.length ? d.accounts : DEFAULT_ACCOUNTS,
         budgets: d.budgets ?? {},
         goals: d.goals ?? [],
+        categories: d.categories?.length ? d.categories : DEFAULT_CATEGORIES,
       };
     }
     const old = localStorage.getItem(OLD_KEY);
     if (old) {
       const arr = JSON.parse(old) as Transaction[];
       if (Array.isArray(arr)) {
-        return { tx: arr.map((t) => normalizeTx(t)), accounts: DEFAULT_ACCOUNTS, budgets: DEFAULT_BUDGETS, goals: [] };
+        return { tx: arr.map((t) => normalizeTx(t)), accounts: DEFAULT_ACCOUNTS, budgets: DEFAULT_BUDGETS, goals: [], categories: DEFAULT_CATEGORIES };
       }
     }
   } catch {

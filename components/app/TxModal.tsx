@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { TxType } from "@/lib/types";
-import { CATEGORIES } from "@/lib/categories";
+import { catList } from "@/lib/categories";
 import { fmt, isoDate } from "@/lib/format";
 import { newId } from "@/lib/id";
 import { Button, Field, Modal } from "../ui";
@@ -13,7 +13,7 @@ export default function TxModal() {
   const editing = txModal.editing;
   const [type, setType] = useState<TxType>(editing?.type ?? "expense");
   const [digits, setDigits] = useState(editing ? String(editing.amount) : "");
-  const [category, setCategory] = useState(editing?.category ?? CATEGORIES.expense[0].id);
+  const [category, setCategory] = useState(editing?.category ?? catList("expense")[0]?.id ?? "chi_khac");
   const [date, setDate] = useState(editing?.date ?? isoDate(new Date()));
   const [account, setAccount] = useState(editing?.account ?? s.accounts[0]?.id ?? "tien_mat");
   const [payee, setPayee] = useState(editing?.payee ?? "");
@@ -28,7 +28,7 @@ export default function TxModal() {
 
   function switchType(next: TxType) {
     setType(next);
-    setCategory(CATEGORIES[next][0].id);
+    setCategory(catList(next)[0]?.id ?? "");
   }
 
   function build() {
@@ -72,7 +72,7 @@ export default function TxModal() {
         <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <Field label="Danh mục" htmlFor="tx-cat">
             <select id="tx-cat" value={category} onChange={(e) => setCategory(e.target.value)} className="input-field">
-              {CATEGORIES[type].map((c) => (<option key={c.id} value={c.id}>{c.icon} {c.label}</option>))}
+              {catList(type).map((c) => (<option key={c.id} value={c.id}>{c.icon} {c.label}</option>))}
             </select>
           </Field>
           <Field label="Ngày" htmlFor="tx-date">

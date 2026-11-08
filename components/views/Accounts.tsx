@@ -54,13 +54,14 @@ export default function Accounts() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div><div className="text-[11px] font-semibold tracking-[0.06em] text-muted uppercase">Tổng tài sản ròng</div><div className={`mt-1 font-mono text-2xl font-bold ${net < 0 ? "text-expense" : ""}`}>{fmt(net)}đ</div></div>
-          <div><div className="text-[11px] font-semibold tracking-[0.06em] text-muted uppercase">Tài sản</div><div className="mt-1 font-mono text-xl font-bold text-income">{fmt(assets)}đ</div></div>
-          <div><div className="text-[11px] font-semibold tracking-[0.06em] text-muted uppercase">Nợ</div><div className="mt-1 font-mono text-xl font-bold text-expense">{fmt(Math.abs(debts))}đ</div></div>
+      <section className="card relative overflow-hidden border-0 bg-gradient-to-br from-brand-from to-brand-to px-5 py-5 text-white">
+        <div aria-hidden="true" className="pointer-events-none absolute -top-10 -right-10 size-40 rounded-full bg-white/10" />
+        <div className="relative grid gap-4 sm:grid-cols-3">
+          <div><div className="text-[11px] font-semibold tracking-[0.06em] uppercase opacity-80">Tổng tài sản ròng</div><div className="mt-1 font-mono text-2xl font-bold">{fmt(net)}đ</div></div>
+          <div><div className="text-[11px] font-semibold tracking-[0.06em] uppercase opacity-80">Tài sản</div><div className="mt-1 font-mono text-xl font-bold">{fmt(assets)}đ</div></div>
+          <div><div className="text-[11px] font-semibold tracking-[0.06em] uppercase opacity-80">Nợ</div><div className="mt-1 font-mono text-xl font-bold">{fmt(Math.abs(debts))}đ</div></div>
         </div>
-      </Card>
+      </section>
       <div className="flex items-center justify-between gap-3">
         <p className="m-0 text-[13px] text-muted">Số dư = số dư ban đầu + thu − chi của mọi giao dịch ghi vào tài khoản.</p>
         <Button variant="primary" onClick={() => setModal({ account: null })}><Icon name="plus" className="size-4" />Thêm tài khoản</Button>
@@ -70,7 +71,7 @@ export default function Accounts() {
           <Card key={a.id}>
             <div className="flex items-start justify-between gap-2">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-alt text-xl">{ACCOUNT_KINDS[a.kind].icon}</span>
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl text-xl" style={{ background: `color-mix(in srgb, var(--cat-${ACCOUNT_KINDS[a.kind].color}) 18%, transparent)` }}>{ACCOUNT_KINDS[a.kind].icon}</span>
                 <div className="min-w-0"><h3 className="m-0 truncate text-[15px] font-bold">{a.name}</h3><div className="text-xs text-muted">{ACCOUNT_KINDS[a.kind].label}</div></div>
               </div>
               <div className="flex shrink-0 gap-0.5">

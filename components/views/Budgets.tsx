@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { budgetRows, statusTone } from "@/lib/budget";
-import { CATEGORIES, catInfo } from "@/lib/categories";
+import { catInfo, catList, tint, catColor } from "@/lib/categories";
 import { fmt } from "@/lib/format";
 import { periodLabel, totals } from "@/lib/period";
 import { useApp } from "../app/AppContext";
@@ -44,7 +44,7 @@ export default function Budgets() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card title={`Ngân sách ${periodLabel(period).toLowerCase()}`}>
+      <Card title={`Ngân sách ${periodLabel(period).toLowerCase()}`} icon="pie" color={4}>
         {limitTotal === 0 ? <p className="text-[13px] text-muted">Nhập hạn mức mỗi tháng cho từng danh mục bên dưới để theo dõi mức chi.</p> : (
           <>
             <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -58,17 +58,17 @@ export default function Budgets() {
         )}
       </Card>
 
-      <Card title="Hạn mức theo danh mục">
+      <Card title="Hạn mức theo danh mục" icon="tag" color={2}>
         <p className="mb-3 text-[13px] text-muted">Nhập hạn mức chi mỗi tháng. Bỏ trống hoặc nhập 0 để không đặt ngân sách cho danh mục đó.</p>
         <ul className="flex flex-col divide-y divide-line-light">
-          {CATEGORIES.expense.map((c) => {
+          {catList("expense").map((c) => {
             const r = byCat.get(c.id) ?? { cat: c.id, limit: 0, spent: 0, pct: 0, status: "none" as const };
             const st = STATUS[r.status];
             return (
               <li key={c.id} className="grid grid-cols-1 gap-x-4 gap-y-2 py-3.5 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_150px]">
                 <div className="min-w-0">
                   <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                    <span className="text-[14px] font-semibold">{c.icon} {c.label}</span>
+                    <span className="flex items-center gap-2 text-[14px] font-semibold"><span className="flex size-7 items-center justify-center rounded-lg text-sm" style={{ background: tint(catColor(c.id)) }}>{c.icon}</span>{c.label}</span>
                     <Pill tone={st.tone}>{st.label}</Pill>
                   </div>
                   {r.limit > 0 && <Progress pct={r.pct} tone={statusTone(r.status)} />}
@@ -84,7 +84,7 @@ export default function Budgets() {
         </ul>
       </Card>
 
-      <Card title="Gợi ý phân bổ thu nhập: quy tắc 50/30/20">
+      <Card title="Gợi ý phân bổ thu nhập: quy tắc 50/30/20" icon="zap" color={7}>
         {inc === 0 ? <p className="text-[13px] text-muted">Chưa có thu nhập trong kỳ này để tính gợi ý.</p> : (
           <div className="grid gap-3 sm:grid-cols-3">
             {[["Nhu cầu thiết yếu", 0.5, "nhà ở, ăn uống, hóa đơn, đi lại"], ["Mong muốn", 0.3, "giải trí, mua sắm, du lịch"], ["Tiết kiệm & đầu tư", 0.2, "quỹ khẩn cấp, mục tiêu, đầu tư"]].map(([name, r, hint]) => (

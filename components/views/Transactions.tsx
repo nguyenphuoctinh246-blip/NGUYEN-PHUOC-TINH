@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CATEGORIES, catInfo } from "@/lib/categories";
+import { catColor, catInfo, catList, tint } from "@/lib/categories";
 import { fmt, fmtDateFull } from "@/lib/format";
 import { periodLabel } from "@/lib/period";
 import { useApp } from "../app/AppContext";
@@ -53,8 +53,8 @@ export default function Transactions() {
           </select>
           <select aria-label="Danh mục" className={sel} value={cat} onChange={(e) => setCat(e.target.value)}>
             <option value="all">Mọi danh mục</option>
-            <optgroup label="Chi tiêu">{CATEGORIES.expense.map((c) => (<option key={c.id} value={c.id}>{c.icon} {c.label}</option>))}</optgroup>
-            <optgroup label="Thu nhập">{CATEGORIES.income.map((c) => (<option key={c.id} value={c.id}>{c.icon} {c.label}</option>))}</optgroup>
+            <optgroup label="Chi tiêu">{catList("expense").map((c) => (<option key={c.id} value={c.id}>{c.icon} {c.label}</option>))}</optgroup>
+            <optgroup label="Thu nhập">{catList("income").map((c) => (<option key={c.id} value={c.id}>{c.icon} {c.label}</option>))}</optgroup>
           </select>
           <select aria-label="Tài khoản" className={sel} value={acc} onChange={(e) => setAcc(e.target.value)}>
             <option value="all">Mọi tài khoản</option>
@@ -92,7 +92,7 @@ export default function Transactions() {
               return (
                 <li key={t.id} className="grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 border-b border-line-light px-4 py-3 last:border-b-0 hover:bg-surface-alt md:grid-cols-[96px_minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_130px_44px]"
                   onClick={() => openTx(t)}>
-                  <span className={`flex size-9 items-center justify-center rounded-[10px] text-base md:hidden ${inc ? "bg-income-soft" : "bg-expense-soft"}`}>{info.icon}</span>
+                  <span className="flex size-9 items-center justify-center rounded-[10px] text-base md:hidden" style={{ background: tint(catColor(t.category)) }}>{info.icon}</span>
                   <span className="hidden text-[13px] text-fg-2 md:block">{fmtDateFull(t.date)}</span>
                   <span className="min-w-0">
                     <span className="block truncate text-[13px] font-semibold">{t.payee || info.label}</span>
@@ -101,7 +101,7 @@ export default function Transactions() {
                     </span>
                     {t.tags.length > 0 && <span className="mt-1 flex flex-wrap gap-1">{t.tags.map((g) => (<Pill key={g} tone="muted">#{g}</Pill>))}</span>}
                   </span>
-                  <span className="hidden truncate text-[13px] md:block">{info.icon} {info.label}</span>
+                  <span className="hidden min-w-0 items-center gap-2 text-[13px] md:flex"><span className="flex size-7 shrink-0 items-center justify-center rounded-lg text-sm" style={{ background: tint(catColor(t.category)) }}>{info.icon}</span><span className="truncate">{info.label}</span></span>
                   <span className="hidden truncate text-[13px] text-fg-2 md:block">{accName(t.account)}</span>
                   <span className={`text-right font-mono text-[13px] font-semibold ${inc ? "text-income" : "text-expense"}`}>{(inc ? "+" : "-") + fmt(t.amount)}</span>
                   <span className="hidden justify-end md:flex" onClick={(e) => e.stopPropagation()}>

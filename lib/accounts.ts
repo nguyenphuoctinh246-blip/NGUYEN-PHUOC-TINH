@@ -1,11 +1,11 @@
 import type { Account, AccountKind, Transaction } from "./types";
 
-export const ACCOUNT_KINDS: Record<AccountKind, { label: string; icon: string }> = {
-  cash: { label: "Tiền mặt", icon: "💵" },
-  bank: { label: "Tài khoản ngân hàng", icon: "🏦" },
-  ewallet: { label: "Ví điện tử", icon: "📱" },
-  credit: { label: "Thẻ tín dụng", icon: "💳" },
-  saving: { label: "Tiết kiệm", icon: "🐷" },
+export const ACCOUNT_KINDS: Record<AccountKind, { label: string; icon: string; color: number }> = {
+  cash: { label: "Tiền mặt", icon: "💵", color: 3 },
+  bank: { label: "Tài khoản ngân hàng", icon: "🏦", color: 1 },
+  ewallet: { label: "Ví điện tử", icon: "📱", color: 5 },
+  credit: { label: "Thẻ tín dụng", icon: "💳", color: 2 },
+  saving: { label: "Tiết kiệm", icon: "🐷", color: 4 },
 };
 
 export const DEFAULT_ACCOUNTS: Account[] = [

@@ -11,10 +11,10 @@ const LINKS = [
   ["#hoi-dap", "Hỏi đáp"],
 ];
 
-export function Logo() {
+export function Logo({ light = false }: { light?: boolean }) {
   return (
-    <span className="flex items-center gap-2 font-extrabold tracking-[-0.02em]">
-      <span className="flex size-8 items-center justify-center rounded-[9px] bg-accent text-white">
+    <span className={`flex items-center gap-2 font-extrabold tracking-[-0.02em] ${light ? "text-white" : ""}`}>
+      <span className="flex size-8 items-center justify-center rounded-[9px] bg-gradient-to-br from-brand-from to-brand-to text-white shadow-pop">
         <Icon name="wallet" className="size-[18px]" />
       </span>
       Chi Tiêu
@@ -42,7 +42,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <AppLink href="/ung-dung" className="hidden rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 sm:block">
+          <AppLink href="/ung-dung" className="hidden rounded-lg bg-gradient-to-r from-brand-from to-brand-to px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 sm:block">
             Mở ứng dụng
           </AppLink>
           <button
