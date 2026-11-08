@@ -26,6 +26,9 @@ export function viAuthError(msg: string): string {
   if (m.includes("at least") && m.includes("password")) return "Mật khẩu cần tối thiểu 6 ký tự.";
   if (m.includes("not confirmed")) return "Email chưa được xác nhận. Hãy mở email xác nhận rồi đăng nhập lại.";
   if (m.includes("invalid") && m.includes("email")) return "Email không hợp lệ.";
+  const wait = msg.match(/after (\d+) seconds?/i);
+  if (wait) return `Vừa thử xong, vui lòng chờ ${wait[1]} giây rồi thử lại.`;
+  if (m.includes("email") && (m.includes("rate limit") || m.includes("over_email"))) return "Supabase đang giới hạn số email xác nhận gửi đi (gói miễn phí chỉ vài email mỗi giờ). Cách nhanh nhất: trong Supabase mở Authentication → Users → Add user → Create new user, nhập email và mật khẩu, tick \"Auto Confirm User\", rồi quay lại đây dùng tab Đăng nhập. Hoặc mở email xác nhận đã nhận trước đó (kiểm tra cả thư rác), hoặc chờ khoảng 1 giờ.";
   if (m.includes("rate limit") || m.includes("too many")) return "Thao tác quá nhanh. Vui lòng thử lại sau ít phút.";
   if (m.includes("not valid json") || m.includes("unexpected token") || m.includes("<!doctype")) return "Địa chỉ Supabase đã nhập không đúng (máy chủ trả về một trang web thay vì dữ liệu). Hãy bấm Kiểm tra kết nối bên dưới, rồi nhập lại Project URL.";
   if (m.includes("fetch") || m.includes("network") || m.includes("failed to")) return "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.";
