@@ -15,7 +15,7 @@ const js = await build({
   format: "iife",
   jsx: "automatic",
   target: "es2020",
-  define: { "process.env.NODE_ENV": '"production"', "process.env.NEXT_PUBLIC_SUPABASE_URL": '""', "process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY": '""' },
+  define: { "process.env.NODE_ENV": '"production"', "process.env.NEXT_PUBLIC_STATIC_PREVIEW": '"1"', "process.env.NEXT_PUBLIC_SUPABASE_URL": '""', "process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY": '""' },
   alias: { "next/link": resolve("preview/link-shim.tsx"), "@supabase/supabase-js": resolve("preview/supabase-stub.ts") },
 });
 

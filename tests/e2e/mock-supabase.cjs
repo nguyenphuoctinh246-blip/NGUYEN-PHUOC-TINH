@@ -26,12 +26,12 @@ function session(u) {
 }
 
 // Chạy một truy vấn với vai trò "authenticated" và JWT của người dùng, đúng như PostgREST
-async function asUser(claims, fn) {
+async function asUser(claims, fn, role = 'authenticated') {
   const c = await pool.connect();
   try {
     await c.query('begin');
     await c.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify(claims)]);
-    await c.query('set local role authenticated');
+    await c.query(`set local role ${role}`);
     const r = await fn(c);
     await c.query('commit');
     return r;
@@ -83,22 +83,26 @@ http.createServer((req, res) => {
         return c ? send(200, { id: c.sub, email: c.email }) : send(401, { msg: 'bad jwt' });
       }
       if (u.pathname === '/auth/v1/logout') return send(204);
+      const apikey = req.headers.apikey || '';
+      if (u.pathname === '/auth/v1/settings') return apikey === (process.env.MOCK_KEY || 'test-anon-key') ? send(200, { mailer_autoconfirm: true, disable_signup: false }) : send(401, { message: 'Invalid API key' });
       if (u.pathname === '/__state') return send(200, { log: log.slice(-80) });
 
-      const claims = tokens.get((req.headers.authorization || '').replace('Bearer ', ''));
+      const bearer = (req.headers.authorization || '').replace('Bearer ', '');
+      const claims = tokens.get(bearer);
+      const anon = !claims && apikey === (process.env.MOCK_KEY || 'test-anon-key');
       const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)$/);
       if (rpc) {
-        if (!claims) return send(401, { message: 'JWT invalid' });
+        if (!claims && !anon) return send(401, { message: 'JWT invalid' });
         if (!FUNCS.has(rpc[1])) return send(404, { code: 'PGRST202', message: `Could not find the function public.${rpc[1]}` });
         log.push(`RPC ${rpc[1]}`);
         const keys = Object.keys(j);
         const sql = `select public.${rpc[1]}(${keys.map((k, i) => `${k} => $${i + 1}`).join(', ')}) as r`;
-        const r = await asUser(claims, (c) => c.query(sql, keys.map((k) => j[k])));
+        const r = await asUser(claims || {}, (c) => c.query(sql, keys.map((k) => j[k])), claims ? 'authenticated' : 'anon');
         return send(200, r.rows[0].r);
       }
       const m = u.pathname.match(/^\/rest\/v1\/(\w+)$/);
       if (m && TABLES.has(m[1])) {
-        if (!claims) return send(401, { message: 'JWT invalid' });
+        if (!claims && !anon) return send(401, { message: 'JWT invalid' });
         const t = m[1];
         log.push(`${req.method} ${t}`);
         if (req.method === 'GET' || req.method === 'HEAD') {
@@ -106,10 +110,10 @@ http.createServer((req, res) => {
           const w = where(u.query, params);
           const off = +(u.query.offset || 0);
           const lim = u.query.limit ? +u.query.limit : 100000;
-          const r = await asUser(claims, async (c) => ({
+          const r = await asUser(claims || {}, async (c) => ({
             rows: (await c.query(`select * from public.${t} ${w} order by 1, 2 offset ${off} limit ${lim}`, params)).rows,
             total: +(await c.query(`select count(*) from public.${t} ${w}`, params)).rows[0].count,
-          }));
+          }), claims ? 'authenticated' : 'anon');
           return send(200, req.method === 'HEAD' ? undefined : r.rows, { 'content-range': `${r.rows.length ? off + '-' + (off + r.rows.length - 1) : '*'}/${r.total}` });
         }
         if (req.method === 'POST') {

@@ -60,8 +60,9 @@ Mặc định dữ liệu chỉ lưu trên từng trình duyệt. Để nhiều 
 
 1. Tạo dự án miễn phí tại [supabase.com](https://supabase.com), mở SQL Editor, dán và chạy toàn bộ file `supabase/schema.sql`.
 2. Lấy **Project URL** và khóa **anon/publishable** ở Project Settings → API (không dùng khóa service_role/secret).
-3. Trên Vercel → Settings → Environment Variables, thêm `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` (xem `.env.example`), rồi **Redeploy**.
-4. Mở `/ung-dung` → mục **Đồng bộ** → tạo tài khoản. Mở cùng link trên thiết bị khác và đăng nhập.
+3. **Cách nhanh (khuyên dùng):** mở `/ung-dung` → mục **Đồng bộ** → dán Project URL và khóa vào ô *Kết nối cơ sở dữ liệu chung* → **Kiểm tra và kết nối**. Ứng dụng tự kiểm tra (khóa đúng chưa, đã chạy schema.sql chưa) và báo lỗi bằng tiếng Việt. Không cần Vercel hay triển khai lại.
+   *Cách khác:* trên Vercel → Settings → Environment Variables, thêm `NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` (xem `.env.example`), rồi **Redeploy**.
+4. Tạo tài khoản. Trên điện thoại hoặc máy khác, **quét mã QR** (hoặc mở link) trong khung *Kết nối thiết bị khác vào cùng nguồn dữ liệu*: thiết bị tự nhận cấu hình, bạn chỉ cần đăng nhập và duyệt bằng mã 6 số. Sau khi mọi thiết bị đã vào, nên tắt "Allow new users to sign up" trong Supabase.
 
 5. **Duyệt thiết bị bằng mã:** thiết bị đầu tiên được duyệt tự động và nhận 8 mã khôi phục (hãy lưu lại). Thiết bị mới đăng nhập sẽ hiện mã 6 số và bị chặn cho đến khi một thiết bị đã duyệt nhập mã đó ở Đồng bộ → Thiết bị đã đăng nhập. Việc chặn do chính cơ sở dữ liệu thực hiện (Row Level Security), không chỉ ở giao diện.
 

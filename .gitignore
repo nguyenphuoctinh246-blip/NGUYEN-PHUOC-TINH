@@ -8,3 +8,4 @@ out
 *.zip
 .test-build.cjs
 .env*.local
+.next-e2e-*

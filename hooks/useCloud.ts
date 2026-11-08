@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { getCloud } from "@/lib/cloud/client";
-import { cloudConfigured } from "@/lib/cloud/config";
+import { getCloudConfig, importConfigFromHash, shareLink, type CloudConfig } from "@/lib/cloud/config";
 import {
   approveDevice, createRecoveryCodes, denyDevice, deviceIdentity, forgetDevice, listDevices, myDevice,
   registerDevice, revokeDevice, useRecoveryCode, type DeviceInfo,
@@ -37,8 +37,10 @@ export interface DeviceState { status: "checking" | "approved" | "pending" | "de
 
 /** Đăng nhập + duyệt thiết bị bằng mã + đồng bộ dữ liệu giữa các thiết bị (Supabase). */
 export function useCloud(s: StoreApi) {
+  const [cfg, setCfg] = useState<CloudConfig | null>(null);
+  const [cfgReady, setCfgReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
-  const [authReady, setAuthReady] = useState(!cloudConfigured);
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [info, setInfo] = useState<SyncInfo>(IDLE);
   const [choice, setChoice] = useState<PendingChoice | null>(null);
   const [device, setDevice] = useState<DeviceState>({ status: "checking" });
@@ -49,15 +51,24 @@ export function useCloud(s: StoreApi) {
   const sRef = useRef(s);
   sRef.current = s;
 
+  // Đọc cấu hình kết nối (biến môi trường, hoặc cấu hình đã nhập/nhận qua link #ket-noi=...)
   useEffect(() => {
-    const db = getCloud();
-    if (!db) return;
-    let alive = true;
-    void db.auth.getSession().then(({ data }) => { if (alive) { setSession(data.session); setAuthReady(true); } });
-    const { data } = db.auth.onAuthStateChange((_e, sess) => setSession(sess));
-    return () => { alive = false; data.subscription.unsubscribe(); };
+    importConfigFromHash();
+    setCfg(getCloudConfig());
+    setCfgReady(true);
   }, []);
 
+  useEffect(() => {
+    const db = cfgReady ? getCloud() : null;
+    if (!db) return;
+    let alive = true;
+    void db.auth.getSession().then(({ data }) => { if (alive) { setSession(data.session); setSessionChecked(true); } });
+    const { data } = db.auth.onAuthStateChange((_e, sess) => setSession(sess));
+    return () => { alive = false; data.subscription.unsubscribe(); };
+  }, [cfgReady]);
+
+  const configured = !!cfg;
+  const authReady = cfgReady && (!configured || sessionChecked);
   const uid = session?.user.id ?? null;
 
   const refreshDevices = useCallback(async () => {
@@ -225,7 +236,7 @@ export function useCloud(s: StoreApi) {
   const dismissRecovery = useCallback(() => setRecovery(null), []);
 
   return {
-    configured: cloudConfigured, authReady, user: session?.user ?? null, info, choice, resolveChoice,
+    configured, configSource: cfg?.source ?? null, authReady, makeShareLink: () => (cfg ? shareLink(cfg) : ""), user: session?.user ?? null, info, choice, resolveChoice,
     signIn, signUp, signOut, syncNow, verify, reload,
     device, devices, pendingDevices: devices.filter((d) => d.status === "pending"), refreshDevices,
     approve, deny, revoke, recovery, newRecoveryCodes, dismissRecovery, submitRecovery,

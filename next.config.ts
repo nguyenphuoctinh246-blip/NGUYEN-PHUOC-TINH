@@ -7,6 +7,7 @@ const basePath = process.env.BASE_PATH || "";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  ...(process.env.NEXT_DIST_DIR && { distDir: process.env.NEXT_DIST_DIR }),
   ...(isStatic && {
     output: "export",
     trailingSlash: true,

@@ -6,6 +6,8 @@ import { useApp } from "../app/AppContext";
 import Icon from "../Icon";
 import { Button, Card, Field, Pill } from "../ui";
 import DevicesCard from "./DevicesCard";
+import { ConnectForm, ShareCard } from "./ConnectCard";
+import { runtimeConfigAllowed } from "@/lib/cloud/config";
 
 function Setup() {
   return (
@@ -138,6 +140,8 @@ function Signed() {
 
       <DevicesCard />
 
+      <ShareCard />
+
       <Card title="Kiểm tra dữ liệu" icon="check" color={3} action={<Button variant="primary" onClick={() => void check()} disabled={checking}>{checking ? "Đang kiểm tra…" : "Kiểm tra ngay"}</Button>}>
         <p className="mt-0 mb-3 text-[13px] text-muted">So sánh dữ liệu trên máy này với dữ liệu đang lưu trong tài khoản, để chắc chắn mọi thiết bị thấy cùng một số liệu.</p>
         {err && <p role="alert" className="m-0 rounded-lg bg-expense-soft px-3 py-2 text-[13px] text-expense">{err}</p>}
@@ -177,7 +181,8 @@ function Signed() {
 
 export default function SyncView() {
   const { cloud } = useApp();
-  if (!cloud.configured) return <Setup />;
+  if (!cloud.authReady && !cloud.configured) return <div className="card h-40 animate-pulse" aria-busy="true" />;
+  if (!cloud.configured) return runtimeConfigAllowed ? <ConnectForm /> : <Setup />;
   if (!cloud.authReady) return <div className="card h-40 animate-pulse" aria-busy="true" />;
-  return cloud.user ? <Signed /> : <AuthCard />;
+  return cloud.user ? <Signed /> : (<div className="flex flex-col gap-4"><AuthCard /><div className="mx-auto w-full max-w-2xl"><ShareCard /></div></div>);
 }
