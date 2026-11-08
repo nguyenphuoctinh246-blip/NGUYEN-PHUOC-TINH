@@ -10,6 +10,10 @@ npm run dev      # http://localhost:3000
 npm run build && npm start   # bản production
 ```
 
+## Đưa lên web
+
+Xem [DEPLOY.md](./DEPLOY.md) (Vercel hoặc GitHub Pages).
+
 ## Cấu trúc
 
 ```

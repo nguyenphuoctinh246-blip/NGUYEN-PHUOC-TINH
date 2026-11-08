@@ -1,7 +1,8 @@
-node_modules
-.next
-out
-next-env.d.ts
 *.tsbuildinfo
 .env*.local
+.next
 dist
+next-env.d.ts
+node_modules
+out
+*.zip
