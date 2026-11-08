@@ -6,8 +6,8 @@ import { getSamples } from "@/lib/samples";
 import { loadTransactions, saveTransactions } from "@/lib/storage";
 
 /**
- * Transactions persisted in localStorage.
- * Loaded after mount so server and client render the same markup (no hydration mismatch).
+ * Giao dịch được lưu trong localStorage.
+ * Nạp sau khi trang hiển thị để HTML của server và trình duyệt khớp nhau (không lỗi hydration).
  */
 export function useTransactions() {
   const [tx, setTx] = useState<Transaction[]>([]);
@@ -25,15 +25,24 @@ export function useTransactions() {
   const hasSamples = tx.some((t) => t.isSample);
 
   const add = useCallback((t: Transaction) => {
-    // First real entry replaces the sample data
-    setTx((prev) => (prev.some((p) => p.isSample) ? [t] : [...prev, t]));
+    // Giao dịch thật đầu tiên sẽ thay thế dữ liệu mẫu
+    setTx((prev) => [...prev.filter((p) => !p.isSample), t]);
+  }, []);
+
+  const update = useCallback((t: Transaction) => {
+    setTx((prev) => prev.map((p) => (p.id === t.id ? { ...t, isSample: false } : p)));
   }, []);
 
   const remove = useCallback((id: string) => {
     setTx((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  /** Thêm nhiều giao dịch (nhập file). Dữ liệu mẫu bị loại bỏ. */
+  const addMany = useCallback((items: Transaction[]) => {
+    setTx((prev) => [...prev.filter((p) => !p.isSample), ...items]);
+  }, []);
+
   const clear = useCallback(() => setTx([]), []);
 
-  return { tx, ready, hasSamples, add, remove, clear };
+  return { tx, ready, hasSamples, add, update, remove, addMany, clear };
 }

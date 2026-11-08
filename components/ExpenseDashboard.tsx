@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import type { Transaction } from "@/lib/types";
 import { useTransactions } from "@/hooks/useTransactions";
 import SummaryCards from "./SummaryCards";
 import BalanceTrend from "./BalanceTrend";
@@ -7,9 +9,16 @@ import MonthlyChart from "./MonthlyChart";
 import BreakdownChart from "./BreakdownChart";
 import TxForm from "./TxForm";
 import TxHistory from "./TxHistory";
+import DataTools from "./DataTools";
 
 export default function ExpenseDashboard() {
-  const { tx, ready, hasSamples, add, remove, clear } = useTransactions();
+  const { tx, ready, hasSamples, add, update, remove, addMany, clear } = useTransactions();
+  const [editing, setEditing] = useState<Transaction | null>(null);
+
+  function startEdit(t: Transaction) {
+    setEditing(t);
+    document.getElementById("form-giao-dich")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 
   return (
     <>
@@ -48,9 +57,22 @@ export default function ExpenseDashboard() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-[340px_1fr]">
-            <TxForm onAdd={add} />
-            <TxHistory transactions={tx} onDelete={remove} />
+            <TxForm
+              key={editing?.id ?? "new"}
+              editing={editing}
+              onAdd={add}
+              onUpdate={(t) => { update(t); setEditing(null); }}
+              onCancel={() => setEditing(null)}
+            />
+            <TxHistory
+              transactions={tx}
+              editingId={editing?.id ?? null}
+              onEdit={startEdit}
+              onDelete={(id) => { remove(id); if (editing?.id === id) setEditing(null); }}
+            />
           </div>
+
+          <DataTools transactions={tx} hasSamples={hasSamples} onImport={addMany} onClear={() => { clear(); setEditing(null); }} />
         </>
       )}
     </>
