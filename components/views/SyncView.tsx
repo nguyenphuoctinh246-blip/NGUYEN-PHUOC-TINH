@@ -39,6 +39,7 @@ function AuthCard() {
     e.preventDefault();
     setMsg(null);
     if (!email.trim() || !pw) return setMsg({ kind: "err", text: "Vui lòng nhập email và mật khẩu." });
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email.trim())) return setMsg({ kind: "err", text: "Email chưa đúng định dạng (ví dụ ten@gmail.com). Hãy nhập đúng email đã dùng trên máy tính." });
     if (mode === "up" && pw.length < 6) return setMsg({ kind: "err", text: "Mật khẩu cần tối thiểu 6 ký tự." });
     setBusy(true);
     try {
@@ -61,6 +62,11 @@ function AuthCard() {
     <Card title="Đăng nhập để đồng bộ" icon="user" color={10} className="mx-auto w-full max-w-md">
       <p className="mt-0 mb-4 text-[13px] text-muted">Đăng nhập cùng một tài khoản trên mọi thiết bị để nhập và xem chung dữ liệu thu chi.</p>
       <div className="mb-4 flex gap-1 rounded-lg bg-surface-alt p-[3px]" role="tablist">{tab("in", "Đăng nhập")}{tab("up", "Tạo tài khoản")}</div>
+      {mode === "up" ? (
+        <p className="mt-0 mb-3.5 rounded-lg bg-warn-soft px-3 py-2.5 text-[13px] leading-relaxed text-warn"><b>Chỉ tạo tài khoản MỘT lần</b>, trên thiết bị đầu tiên. Điện thoại và các máy khác phải chọn tab <b>Đăng nhập</b> với đúng email và mật khẩu đó, nếu không mỗi máy sẽ có một kho dữ liệu riêng và không thấy dữ liệu của nhau.</p>
+      ) : (
+        <p className="mt-0 mb-3.5 text-xs leading-relaxed text-muted">Dùng đúng email và mật khẩu đã tạo trên thiết bị đầu tiên. Đăng nhập khác email sẽ ra kho dữ liệu khác.</p>
+      )}
       <form onSubmit={submit} className="flex flex-col gap-3.5">
         <Field label="Email" htmlFor="auth-email"><input id="auth-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-field" placeholder="ten@email.com" /></Field>
         <Field label="Mật khẩu" htmlFor="auth-pw" hint={mode === "up" ? "Tối thiểu 6 ký tự." : undefined}>
