@@ -24,7 +24,7 @@ export default function MonthlyTable({
   const tone = (n: number) => (n > 0 ? "text-income" : n < 0 ? "text-expense" : "text-muted");
 
   return (
-    <section className="card mb-5 overflow-hidden">
+    <section className="card min-w-0 overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-[18px] pb-3">
         <h2 className="card-title">Báo cáo từng tháng, năm {year}</h2>
         <button type="button" onClick={() => onSelect(0)} aria-pressed={selectedMonth === 0}

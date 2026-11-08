@@ -19,7 +19,7 @@ export default function BreakdownChart({ transactions, type }: { transactions: T
 
   if (total === 0) {
     return (
-      <section className="card px-4 py-[18px]">
+      <section className="card min-w-0 px-4 py-[18px]">
         <h2 className="card-title">{copy.title}</h2>
         <p className="py-8 text-center text-[13px] text-muted">{copy.empty}</p>
       </section>
@@ -39,7 +39,7 @@ export default function BreakdownChart({ transactions, type }: { transactions: T
   });
 
   return (
-    <section className="card px-4 py-[18px]">
+    <section className="card min-w-0 px-4 py-[18px]">
       <h2 className="card-title mb-3.5">{copy.title}</h2>
 
       <div className="mb-[18px] flex h-2 gap-0.5 overflow-hidden rounded bg-surface-alt">

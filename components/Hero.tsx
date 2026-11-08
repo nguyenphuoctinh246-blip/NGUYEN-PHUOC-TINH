@@ -1,4 +1,5 @@
 import Icon from "./Icon";
+import AppLink from "./AppLink";
 
 const BARS = [
   [38, 24], [52, 30], [44, 36], [66, 34], [58, 40], [82, 46],
@@ -22,12 +23,12 @@ export default function Hero() {
             <span className="bg-gradient-to-r from-accent to-income bg-clip-text text-transparent">giữ tiền được lâu</span>
           </h1>
           <p className="mt-5 max-w-[520px] text-base leading-relaxed text-fg-2 sm:text-lg">
-            Ghi lại thu chi hằng ngày trong vài giây, xem biểu đồ rõ ràng và nắm chắc số dư của bạn. Dữ liệu nằm hoàn toàn trên thiết bị của bạn.
+            Ghi thu chi trong vài giây, đặt ngân sách theo danh mục, theo dõi mục tiêu tiết kiệm và xem báo cáo theo từng tháng, từng năm. Dữ liệu nằm hoàn toàn trên thiết bị của bạn.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a href="#dung-thu" className="inline-flex items-center gap-2 rounded-[10px] bg-accent px-5 py-3 text-sm font-semibold text-white shadow-pop transition-opacity hover:opacity-90">
-              Dùng thử ngay <Icon name="arrow" className="size-4" />
-            </a>
+            <AppLink href="/ung-dung" className="inline-flex items-center gap-2 rounded-[10px] bg-accent px-5 py-3 text-sm font-semibold text-white shadow-pop transition-opacity hover:opacity-90">
+              Mở ứng dụng <Icon name="arrow" className="size-4" />
+            </AppLink>
             <a href="#tinh-nang" className="rounded-[10px] border border-line bg-surface px-5 py-3 text-sm font-semibold transition-colors hover:bg-surface-alt">
               Xem tính năng
             </a>

@@ -1,12 +1,12 @@
 import Icon, { type IconName } from "./Icon";
 
 const ITEMS: { icon: IconName; title: string; desc: string }[] = [
-  { icon: "zap", title: "Ghi chép siêu nhanh", desc: "Nhập số tiền, chọn danh mục là xong. Không màn hình rườm rà, không bước thừa." },
-  { icon: "chart", title: "Biểu đồ trực quan", desc: "Chọn năm, tháng để xem thu chi từng kỳ, so sánh với kỳ trước, phân bổ theo danh mục và biến động số dư." },
-  { icon: "layers", title: "Danh mục rõ ràng", desc: "5 nhóm thu nhập và 8 nhóm chi tiêu quen thuộc: ăn uống, đi lại, nhà cửa, giáo dục…" },
-  { icon: "wallet", title: "Nắm số dư tức thì", desc: "Biết ngay mình còn bao nhiêu và đã chi bao nhiêu phần trăm thu nhập." },
-  { icon: "shield", title: "Riêng tư tuyệt đối", desc: "Dữ liệu chỉ lưu trong trình duyệt của bạn, không máy chủ, không tài khoản, không theo dõi." },
-  { icon: "moon", title: "Sáng và tối", desc: "Giao diện tự theo hệ thống hoặc đổi tay bằng một nút, dịu mắt cả khi ghi chép ban đêm." },
+  { icon: "zap", title: "Ghi giao dịch đầy đủ", desc: "Số tiền, danh mục, ngày, tài khoản, nơi chi tiêu, nhãn và ghi chú. Gõ nhanh với gợi ý từ những lần trước." },
+  { icon: "pie", title: "Ngân sách theo danh mục", desc: "Đặt hạn mức mỗi tháng, thanh tiến độ đổi màu khi sắp hết hoặc vượt mức, kèm gợi ý quy tắc 50/30/20." },
+  { icon: "target", title: "Mục tiêu tiết kiệm", desc: "Đặt số tiền và hạn hoàn thành, ứng dụng tính ra số tiền cần để dành mỗi tháng." },
+  { icon: "wallet", title: "Nhiều tài khoản và ví", desc: "Tiền mặt, ngân hàng, ví điện tử, thẻ tín dụng. Xem tổng tài sản ròng và số dư từng tài khoản." },
+  { icon: "chart", title: "Báo cáo theo năm, tháng", desc: "Chọn kỳ bất kỳ để xem thu chi, so sánh với kỳ trước, phân bổ danh mục và nơi chi nhiều nhất." },
+  { icon: "shield", title: "Riêng tư, xuất Excel", desc: "Dữ liệu chỉ nằm trong trình duyệt của bạn. Xuất Excel (.csv), sao lưu và nhập lại bất cứ lúc nào." },
 ];
 
 export default function Features() {

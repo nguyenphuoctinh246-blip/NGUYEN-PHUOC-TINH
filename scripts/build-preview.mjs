@@ -3,6 +3,7 @@
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 mkdirSync("dist", { recursive: true });
 
@@ -15,6 +16,7 @@ const js = await build({
   jsx: "automatic",
   target: "es2020",
   define: { "process.env.NODE_ENV": '"production"' },
+  alias: { "next/link": resolve("preview/link-shim.tsx") },
 });
 
 execFileSync("npx", ["@tailwindcss/cli", "-i", "app/globals.css", "-o", "dist/styles.css", "--minify"], { stdio: "inherit" });

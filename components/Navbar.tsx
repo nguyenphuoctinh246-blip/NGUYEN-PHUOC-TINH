@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Icon from "./Icon";
 import ThemeToggle from "./ThemeToggle";
+import AppLink from "./AppLink";
 
 const LINKS = [
   ["#tinh-nang", "Tính năng"],
   ["#cach-dung", "Cách dùng"],
-  ["#dung-thu", "Dùng thử"],
   ["#hoi-dap", "Hỏi đáp"],
 ];
 
@@ -42,9 +42,9 @@ export default function Navbar() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <a href="#dung-thu" className="hidden rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 sm:block">
-            Bắt đầu miễn phí
-          </a>
+          <AppLink href="/ung-dung" className="hidden rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 sm:block">
+            Mở ứng dụng
+          </AppLink>
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
@@ -67,9 +67,9 @@ export default function Navbar() {
             </li>
           ))}
           <li className="py-2">
-            <a href="#dung-thu" onClick={() => setOpen(false)} className="block rounded-lg bg-accent px-4 py-3 text-center text-sm font-semibold text-white">
-              Bắt đầu miễn phí
-            </a>
+            <AppLink href="/ung-dung" onClick={() => setOpen(false)} className="block rounded-lg bg-accent px-4 py-3 text-center text-sm font-semibold text-white">
+              Mở ứng dụng
+            </AppLink>
           </li>
         </ul>
       )}

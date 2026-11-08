@@ -14,6 +14,10 @@ export function prevPeriod(p: Period): Period {
   if (p.month === 0) return { year: p.year - 1, month: 0 };
   return p.month === 1 ? { year: p.year - 1, month: 12 } : { year: p.year, month: p.month - 1 };
 }
+export function nextPeriod(p: Period): Period {
+  if (p.month === 0) return { year: p.year + 1, month: 0 };
+  return p.month === 12 ? { year: p.year + 1, month: 1 } : { year: p.year, month: p.month + 1 };
+}
 
 export function totals(tx: Transaction[]) {
   let inc = 0;
@@ -39,11 +43,38 @@ export function monthlyTotals(tx: Transaction[], year: number) {
   return out;
 }
 
-export function yearsOf(tx: Transaction[], extra: number[] = []): number[] {
-  const set = new Set<number>(extra);
+/**
+ * Danh sách năm cho ô chọn: luôn có 5 năm gần đây và 2 năm tới,
+ * cộng thêm mọi năm có dữ liệu, nên người dùng chọn được năm bất kỳ cần xem.
+ */
+export function yearOptions(tx: Transaction[], selected: number): number[] {
+  const now = new Date().getFullYear();
+  let lo = Math.min(now - 5, selected);
+  let hi = Math.max(now + 2, selected);
   for (const t of tx) {
     const y = parseInt(t.date.slice(0, 4), 10);
-    if (y) set.add(y);
+    if (y) { lo = Math.min(lo, y); hi = Math.max(hi, y); }
   }
-  return [...set].sort((a, b) => b - a);
+  const out: number[] = [];
+  for (let y = hi; y >= lo; y--) out.push(y);
+  return out;
+}
+
+export function daysInMonth(y: number, m: number) {
+  return new Date(y, m, 0).getDate();
+}
+
+/** Số ngày đã trôi qua trong kỳ (tính đến hôm nay nếu kỳ đang diễn ra) */
+export function elapsedDays(p: Period, now = new Date()): number {
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  if (p.month) {
+    if (p.year === y && p.month === m) return now.getDate();
+    return daysInMonth(p.year, p.month);
+  }
+  if (p.year === y) {
+    const start = new Date(y, 0, 1).getTime();
+    return Math.floor((now.getTime() - start) / 86400000) + 1;
+  }
+  return (p.year % 4 === 0 && p.year % 100 !== 0) || p.year % 400 === 0 ? 366 : 365;
 }

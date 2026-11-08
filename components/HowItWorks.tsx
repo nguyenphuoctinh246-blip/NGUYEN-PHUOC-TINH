@@ -1,9 +1,9 @@
 import { SectionHead } from "./Features";
 
 const STEPS = [
-  ["1", "Thêm giao dịch", "Chọn chi tiêu hoặc thu nhập, nhập số tiền, danh mục và ghi chú ngắn."],
-  ["2", "Xem biểu đồ", "Ứng dụng tự tổng hợp theo tháng và theo danh mục, không cần tính tay."],
-  ["3", "Điều chỉnh thói quen", "Nhìn ra khoản nào tốn nhất và cân đối lại để tiết kiệm nhiều hơn."],
+  ["1", "Thiết lập", "Thêm tài khoản của bạn (tiền mặt, ngân hàng, ví) và đặt hạn mức chi cho từng danh mục."],
+  ["2", "Ghi giao dịch", "Nhập khoản thu, chi kèm danh mục, nơi chi tiêu và nhãn. Sửa hoặc xóa lại bất cứ lúc nào."],
+  ["3", "Xem báo cáo", "Chọn năm, tháng để xem thu chi, ngân sách, mục tiêu và so sánh với kỳ trước."],
 ];
 
 export default function HowItWorks() {

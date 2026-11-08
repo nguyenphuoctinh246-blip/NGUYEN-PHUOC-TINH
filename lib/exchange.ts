@@ -1,8 +1,8 @@
-import type { Transaction, TxType } from "./types";
+import type { Account, Transaction, TxType } from "./types";
 import { CATEGORIES } from "./categories";
 import { newId } from "./id";
 
-const HEAD = ["Ngày", "Loại", "Danh mục", "Số tiền", "Ghi chú"];
+const HEAD = ["Ngày", "Loại", "Danh mục", "Số tiền", "Ghi chú", "Tài khoản", "Nơi chi/Nguồn thu", "Nhãn"];
 const TYPE_LABEL: Record<TxType, string> = { income: "Thu nhập", expense: "Chi tiêu" };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -10,10 +10,11 @@ const esc = (s: string) => (/[",;\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` :
 const labelOf = (t: Transaction) => CATEGORIES[t.type].find((c) => c.id === t.category)?.label ?? t.category;
 
 /** CSV mở được trực tiếp bằng Excel (có BOM UTF-8, dấu phân cách ;) */
-export function toCsv(tx: Transaction[]): string {
+export function toCsv(tx: Transaction[], accounts: Account[] = []): string {
+  const accName = (id: string) => accounts.find((a) => a.id === id)?.name ?? id;
   const rows = [...tx]
     .sort((a, b) => a.date.localeCompare(b.date))
-    .map((t) => [t.date, TYPE_LABEL[t.type], labelOf(t), String(t.amount), t.note].map(esc).join(";"));
+    .map((t) => [t.date, TYPE_LABEL[t.type], labelOf(t), String(t.amount), t.note, accName(t.account), t.payee, t.tags.join(", ")].map(esc).join(";"));
   return "﻿" + [HEAD.join(";"), ...rows].join("\r\n");
 }
 
@@ -58,7 +59,8 @@ function findCategory(type: TxType, raw: string): string {
 
 export interface ImportResult { items: Transaction[]; skipped: number }
 
-export function parseCsv(text: string): ImportResult {
+export function parseCsv(text: string, accounts: Account[] = []): ImportResult {
+  const defaultAcc = accounts[0]?.id ?? "tien_mat";
   const clean = text.replace(/^﻿/, "");
   const first = clean.split(/\r?\n/, 1)[0] ?? "";
   const delim = first.includes(";") ? ";" : first.includes("\t") ? "\t" : ",";
@@ -72,12 +74,16 @@ export function parseCsv(text: string): ImportResult {
     const type: TxType | null = /^(thu|income)/.test(typeRaw) ? "income" : /^(chi|expense)/.test(typeRaw) ? "expense" : null;
     const amount = parseInt((r[3] ?? "").replace(/[^\d]/g, ""), 10);
     if (!date || !type || !amount || amount < 1) { skipped++; continue; }
-    items.push({ id: newId(), type, amount, category: findCategory(type, r[2] ?? ""), date, note: (r[4] ?? "").trim() });
+    const accKey = (r[5] ?? "").trim().toLowerCase();
+    const account = accounts.find((a) => a.name.toLowerCase() === accKey || a.id === accKey)?.id ?? defaultAcc;
+    const tags = (r[7] ?? "").split(/[,#]/).map((x) => x.trim()).filter(Boolean);
+    items.push({ id: newId(), type, amount, category: findCategory(type, r[2] ?? ""), date, note: (r[4] ?? "").trim(), account, payee: (r[6] ?? "").trim(), tags });
   }
   return { items, skipped };
 }
 
-export function parseJson(text: string): ImportResult {
+export function parseJson(text: string, accounts: Account[] = []): ImportResult {
+  const defaultAcc = accounts[0]?.id ?? "tien_mat";
   const data = JSON.parse(text) as unknown;
   if (!Array.isArray(data)) throw new Error("File không đúng định dạng");
   const items: Transaction[] = [];
@@ -94,6 +100,9 @@ export function parseJson(text: string): ImportResult {
       category: typeof r.category === "string" ? r.category : type === "income" ? "thu_khac" : "chi_khac",
       date,
       note: typeof r.note === "string" ? r.note : "",
+      account: typeof r.account === "string" && accounts.some((a) => a.id === r.account) ? r.account : defaultAcc,
+      payee: typeof r.payee === "string" ? r.payee : "",
+      tags: Array.isArray(r.tags) ? r.tags.map(String) : [],
     });
   }
   return { items, skipped };

@@ -23,3 +23,10 @@ export const monthKey = (d: Date) =>
 export function isoDate(d: Date): string {
   return `${monthKey(d)}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+export const fmtDateFull = (d: string) =>
+  new Date(d).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+/** % thay đổi so với kỳ trước; null nếu kỳ trước bằng 0 */
+export const pctChange = (cur: number, prev: number): number | null =>
+  prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null;

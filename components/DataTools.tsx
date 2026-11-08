@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Transaction } from "@/lib/types";
+import type { Account, Transaction } from "@/lib/types";
 import { downloadFile } from "@/lib/download";
 import { parseCsv, parseJson, toCsv } from "@/lib/exchange";
 import { isoDate } from "@/lib/format";
@@ -10,11 +10,13 @@ type Msg = { kind: "ok" | "err"; text: string } | null;
 
 export default function DataTools({
   transactions,
+  accounts,
   hasSamples,
   onImport,
   onClear,
 }: {
   transactions: Transaction[];
+  accounts: Account[];
   hasSamples: boolean;
   onImport: (items: Transaction[]) => void;
   onClear: () => void;
@@ -26,7 +28,7 @@ export default function DataTools({
   const stamp = isoDate(new Date());
 
   function exportCsv() {
-    downloadFile(`chi-tieu-${stamp}.csv`, toCsv(real), "text/csv;charset=utf-8");
+    downloadFile(`chi-tieu-${stamp}.csv`, toCsv(real, accounts), "text/csv;charset=utf-8");
     setMsg({ kind: "ok", text: `Đã xuất ${real.length} giao dịch ra file Excel (CSV).` });
   }
 
@@ -42,7 +44,7 @@ export default function DataTools({
     try {
       const text = await file.text();
       const isJson = file.name.toLowerCase().endsWith(".json");
-      const { items, skipped } = isJson ? parseJson(text) : parseCsv(text);
+      const { items, skipped } = isJson ? parseJson(text, accounts) : parseCsv(text, accounts);
       if (items.length === 0) {
         setMsg({ kind: "err", text: "Không có dòng hợp lệ nào trong file. Hãy dùng đúng mẫu: Ngày; Loại; Danh mục; Số tiền; Ghi chú." });
         return;
@@ -55,17 +57,18 @@ export default function DataTools({
   }
 
   function downloadTemplate() {
+    const acc = accounts[0]?.id ?? "tien_mat";
     const sample: Transaction[] = [
-      { id: "m1", type: "expense", amount: 45000, category: "an_uong", date: stamp, note: "Cà phê sáng" },
-      { id: "m2", type: "income", amount: 15000000, category: "luong", date: stamp, note: "Lương tháng" },
+      { id: "m1", type: "expense", amount: 45000, category: "an_uong", date: stamp, note: "Cà phê sáng", account: acc, payee: "Quán cafe", tags: ["hằng ngày"] },
+      { id: "m2", type: "income", amount: 15000000, category: "luong", date: stamp, note: "Lương tháng", account: acc, payee: "Công ty ABC", tags: [] },
     ];
-    downloadFile("mau-nhap-chi-tieu.csv", toCsv(sample), "text/csv;charset=utf-8");
+    downloadFile("mau-nhap-chi-tieu.csv", toCsv(sample, accounts), "text/csv;charset=utf-8");
   }
 
   const btn = "cursor-pointer rounded-lg border border-line bg-surface px-3.5 py-2 text-[13px] font-medium text-fg transition-colors hover:bg-surface-alt disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
-    <section className="card mt-4 px-4 py-[18px]" aria-labelledby="data-tools-title">
+    <section className="card px-4 py-[18px]" aria-labelledby="data-tools-title">
       <h2 id="data-tools-title" className="card-title mb-1">Quản lý dữ liệu</h2>
       <p className="mb-3.5 text-[13px] text-muted">
         Dữ liệu lưu trên trình duyệt này. Hãy xuất file định kỳ để sao lưu hoặc chuyển sang máy khác.
@@ -101,7 +104,7 @@ export default function DataTools({
         </p>
       )}
       <p className="mt-3 text-xs text-muted">
-        File nhập .csv gồm 5 cột cách nhau bằng dấu chấm phẩy: Ngày (2026-11-08 hoặc 08/11/2026); Loại (Thu nhập hoặc Chi tiêu); Danh mục; Số tiền; Ghi chú.
+        File nhập .csv gồm các cột cách nhau bằng dấu chấm phẩy: Ngày (2026-11-08 hoặc 08/11/2026); Loại (Thu nhập hoặc Chi tiêu); Danh mục; Số tiền; Ghi chú; Tài khoản; Nơi chi/Nguồn thu; Nhãn. Ba cột cuối có thể để trống.
       </p>
     </section>
   );

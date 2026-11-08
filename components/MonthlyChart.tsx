@@ -51,7 +51,7 @@ export default function MonthlyChart({
   const dim = (m: number, kind: Kind) => (hover && !(hover.m === m && hover.kind === kind) ? 0.35 : 1);
 
   return (
-    <section className="card mb-5 px-4 py-[18px]">
+    <section className="card min-w-0 px-4 py-[18px]">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="card-title">Thu chi theo tháng, năm {year}</h2>
         <div className="flex gap-3.5 text-[11px] text-muted">

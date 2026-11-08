@@ -1,9 +1,9 @@
 import type { Transaction } from "@/lib/types";
 import { fmt } from "@/lib/format";
 
-const W = 360;
-const H = 100;
-const PAD = { l: 8, r: 8, t: 12, b: 12 };
+const W = 900;
+const H = 170;
+const PAD = { l: 10, r: 10, t: 16, b: 16 };
 
 export default function BalanceTrend({ transactions }: { transactions: Transaction[] }) {
   const sorted = [...transactions].sort((a, b) => a.date.localeCompare(b.date));
@@ -28,7 +28,7 @@ export default function BalanceTrend({ transactions }: { transactions: Transacti
   const color = final >= 0 ? "var(--income)" : "var(--expense)";
 
   return (
-    <section className="card mb-5 px-4 py-[18px]">
+    <section className="card min-w-0 px-4 py-[18px]">
       <div className="mb-2.5 flex items-center justify-between">
         <h2 className="card-title">Biến động số dư trong kỳ</h2>
         <span className="font-mono text-[13px] font-semibold" style={{ color }}>

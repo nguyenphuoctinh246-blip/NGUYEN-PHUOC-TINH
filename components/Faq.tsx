@@ -5,7 +5,8 @@ const QA = [
   ["Dữ liệu của tôi được lưu ở đâu?", "Toàn bộ dữ liệu lưu trong trình duyệt của bạn (localStorage). Chúng tôi không có máy chủ nên không thể xem hay thu thập dữ liệu của bạn."],
   ["Xóa lịch sử duyệt web thì có mất dữ liệu không?", "Có. Vì dữ liệu nằm trên trình duyệt, việc xóa dữ liệu trang web sẽ xóa luôn các giao dịch đã ghi. Hãy cẩn thận khi dọn dẹp trình duyệt."],
   ["Có cần tạo tài khoản không?", "Không. Bạn chỉ cần mở trang và bắt đầu ghi chép."],
-  ["Dữ liệu mẫu là gì?", "Lần đầu mở, ứng dụng nạp một vài giao dịch mẫu để bạn xem biểu đồ. Khi thêm giao dịch đầu tiên của mình, dữ liệu mẫu sẽ được thay thế."],
+  ["Dữ liệu mẫu là gì?", "Lần đầu mở, ứng dụng nạp một vài giao dịch và mục tiêu mẫu để bạn xem thử. Khi thêm giao dịch đầu tiên của mình, dữ liệu mẫu tự biến mất. Bạn cũng có thể nạp lại dữ liệu mẫu trong mục Dữ liệu."],
+  ["Làm sao chuyển dữ liệu sang máy khác?", "Vào mục Dữ liệu, bấm Sao lưu (.json) hoặc Xuất Excel (.csv), rồi mở ứng dụng ở máy kia và bấm Nhập từ file."],
   ["Dùng được trên điện thoại không?", "Được. Giao diện tự co giãn cho điện thoại, máy tính bảng và máy tính."],
 ];
 

@@ -2,7 +2,7 @@ import Navbar from "./Navbar";
 import Hero from "./Hero";
 import Features from "./Features";
 import HowItWorks from "./HowItWorks";
-import TrySection from "./TrySection";
+import CtaBanner from "./CtaBanner";
 import Faq from "./Faq";
 import Footer from "./Footer";
 
@@ -14,7 +14,7 @@ export default function Landing() {
         <Hero />
         <Features />
         <HowItWorks />
-        <TrySection />
+        <CtaBanner />
         <Faq />
       </main>
       <Footer />
