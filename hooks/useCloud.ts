@@ -297,6 +297,17 @@ export function useCloud(s: StoreApi) {
     return r;
   }, []);
   const dismissRecovery = useCallback(() => setRecovery(null), []);
+  /** Kiểm tra lại xem cơ sở dữ liệu đã có tính năng tài khoản con chưa; nếu có thì cập nhật trạng thái */
+  const checkSchema = useCallback(async () => {
+    const db = getCloud(); if (!db || !uid) return false;
+    try {
+      const w = await myWorkspace(db, uid);
+      if (w.legacy) return false;
+      setWorkspace(w);
+      await refreshPeople();
+      return true;
+    } catch { return false; }
+  }, [uid, refreshPeople]);
 
   // ----- Tài khoản con (thành viên) -----
   const makeInvite = useCallback(async (name: string, viewAll: boolean) => {
@@ -336,7 +347,7 @@ export function useCloud(s: StoreApi) {
     signIn, signUp, signUpWithInvite, signOut, syncNow, verify, reload,
     device, devices, pendingDevices: devices.filter((d) => d.status === "pending"), refreshDevices,
     pendingConnect, acceptConnect, declineConnect,
-    notice, dismissNotice: () => setNotice(""), workspace, people, invites, authorName, makeInvite, dropInvite, editMember, dropMember, joinWithCode, refreshPeople,
+    checkSchema, notice, dismissNotice: () => setNotice(""), workspace, people, invites, authorName, makeInvite, dropInvite, editMember, dropMember, joinWithCode, refreshPeople,
     approve, deny, revoke, recovery, newRecoveryCodes, dismissRecovery, submitRecovery,
   };
 }

@@ -61,7 +61,7 @@ export default function DeviceGate() {
         <div className="text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">Mã xác nhận của thiết bị này</div>
         <div aria-label={`Mã xác nhận ${device.code ?? ""}`} className="mt-1.5 font-mono text-5xl font-bold tracking-[0.12em] text-accent tabular-nums">{code}</div>
       </div>
-      <ol className="mt-5 flex w-full flex-col gap-2 pl-5 text-left text-[13px] leading-relaxed text-fg-2">
+      <ol className="mt-5 flex w-full list-decimal flex-col gap-2 pl-5 text-left text-[13px] leading-relaxed text-fg-2">
         <li>Mở ứng dụng trên một thiết bị <b>đã đăng nhập và được duyệt</b> (điện thoại hoặc máy tính cũ của bạn).</li>
         <li>Vào mục <b>Đồng bộ</b> → <b>Thiết bị đã đăng nhập</b>.</li>
         <li>Tìm yêu cầu <b>{deviceName()}</b> đang chờ, nhập mã 6 số ở trên rồi bấm <b>Duyệt</b>.</li>

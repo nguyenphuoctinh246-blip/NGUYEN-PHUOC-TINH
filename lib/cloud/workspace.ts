@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export interface Workspace { workspaceId: string; role: "owner" | "member"; name: string; canViewAll: boolean }
+/** legacy = cơ sở dữ liệu chưa chạy schema.sql bản mới (chưa có tính năng tài khoản con) */
+export interface Workspace { workspaceId: string; role: "owner" | "member"; name: string; canViewAll: boolean; legacy?: boolean }
 export interface Person { id: string; name: string; role: "owner" | "member"; canViewAll: boolean | null; joined: string | null }
 export interface Invite { id: string; name: string; canViewAll: boolean; expiresAt: string }
 
@@ -24,7 +25,7 @@ export async function myWorkspace(db: SupabaseClient, fallbackId: string): Promi
   const { data, error } = await rpc(db, "my_workspace");
   if (error) {
     // Chưa chạy lược đồ mới: coi như chủ tài khoản của chính mình để ứng dụng vẫn chạy
-    if (/PGRST202|Could not find the function/i.test(error.message)) return { workspaceId: fallbackId, role: "owner", name: "Chủ tài khoản", canViewAll: true };
+    if (/PGRST202|Could not find the function/i.test(error.message)) return { workspaceId: fallbackId, role: "owner", name: "Chủ tài khoản", canViewAll: true, legacy: true };
     throw fail(error);
   }
   const r = data as { workspace_id: string; role: "owner" | "member"; name: string; can_view_all: boolean };

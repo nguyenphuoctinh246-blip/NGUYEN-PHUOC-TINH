@@ -469,3 +469,6 @@ begin
     end;
   end loop;
 end $$;
+
+-- Làm mới bộ nhớ đệm của API để các hàm mới dùng được ngay.
+notify pgrst, 'reload schema';

@@ -13,6 +13,9 @@ const log = [];
 const TABLES = new Set(['transactions', 'accounts', 'goals', 'categories', 'settings']);
 const FUNCS = new Set(['register_device', 'my_device', 'list_devices', 'approve_device', 'deny_device', 'revoke_device', 'create_recovery_codes', 'use_recovery_code',
   'my_workspace', 'workspace_people', 'create_invite', 'list_invites', 'revoke_invite', 'join_workspace', 'update_member', 'remove_member']);
+// MOCK_LEGACY=1: giả lập cơ sở dữ liệu CHƯA chạy schema.sql bản mới (thiếu các hàm tài khoản con). Bật/tắt: GET /__legacy?on=1|0
+let legacy = process.env.MOCK_LEGACY === '1';
+const NEW_FUNCS = new Set(['my_workspace', 'workspace_people', 'create_invite', 'list_invites', 'revoke_invite', 'join_workspace', 'update_member', 'remove_member']);
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
 
 function session(u) {
@@ -86,6 +89,7 @@ http.createServer((req, res) => {
       if (u.pathname === '/auth/v1/logout') return send(204);
       const apikey = req.headers.apikey || '';
       if (u.pathname === '/auth/v1/settings') return apikey === (process.env.MOCK_KEY || 'test-anon-key') ? send(200, { mailer_autoconfirm: true, disable_signup: false }) : send(401, { message: 'Invalid API key' });
+      if (u.pathname === '/__legacy') { legacy = u.query.on === '1'; return send(200, { legacy }); }
       if (u.pathname === '/__state') return send(200, { log: log.slice(-80) });
 
       const bearer = (req.headers.authorization || '').replace('Bearer ', '');
@@ -94,7 +98,7 @@ http.createServer((req, res) => {
       const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)$/);
       if (rpc) {
         if (!claims && !anon) return send(401, { message: 'JWT invalid' });
-        if (!FUNCS.has(rpc[1])) return send(404, { code: 'PGRST202', message: `Could not find the function public.${rpc[1]}` });
+        if (!FUNCS.has(rpc[1]) || (legacy && NEW_FUNCS.has(rpc[1]))) return send(404, { code: 'PGRST202', message: `Could not find the function public.${rpc[1]}` });
         log.push(`RPC ${rpc[1]}`);
         const keys = Object.keys(j);
         const sql = `select public.${rpc[1]}(${keys.map((k, i) => `${k} => $${i + 1}`).join(', ')}) as r`;

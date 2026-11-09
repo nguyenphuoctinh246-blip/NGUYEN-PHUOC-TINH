@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useApp } from "../app/AppContext";
 import Icon from "../Icon";
 import { Button, Card, Field, Pill } from "../ui";
+import SchemaHelp from "./SchemaHelp";
 
 const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("vi-VN") : "–");
 
-function NewInvite() {
+function NewInvite({ onSchemaError }: { onSchemaError: () => void }) {
   const { cloud } = useApp();
   const [name, setName] = useState("");
   const [viewAll, setViewAll] = useState(false);
@@ -22,7 +23,7 @@ function NewInvite() {
     if (!name.trim()) return setErr("Nhập tên để nhận biết người này (ví dụ: Bé An, Vợ, Kế toán).");
     setBusy(true);
     try { const r = await cloud.makeInvite(name.trim(), viewAll); setMade({ ...r, name: name.trim() }); setName(""); }
-    catch (e2) { setErr(e2 instanceof Error ? e2.message : "Có lỗi xảy ra."); }
+    catch (e2) { const m = e2 instanceof Error ? e2.message : "Có lỗi xảy ra."; if (/schema\.sql/.test(m)) onSchemaError(); else setErr(m); }
     finally { setBusy(false); }
   }
   async function copy(t: string) {
@@ -59,6 +60,8 @@ export default function MembersView() {
   const [confirm, setConfirm] = useState<string | null>(null);
   const [rename, setRename] = useState<{ id: string; value: string } | null>(null);
   const [code, setCode] = useState("");
+  const [needSchema, setNeedSchema] = useState(false);
+  const outdated = needSchema || !!cloud.workspace?.legacy;
   /** Hiện ngay trạng thái tick trong lúc chờ máy chủ xác nhận */
   const [optim, setOptim] = useState<Record<string, boolean>>({});
   const members = cloud.people.filter((p) => p.role === "member");
@@ -71,6 +74,7 @@ export default function MembersView() {
   return (
     <div className="flex flex-col gap-4">
       {err && <p role="alert" className="m-0 rounded-lg bg-expense-soft px-3 py-2 text-[13px] text-expense">{err}</p>}
+      {outdated && <SchemaHelp onChecked={() => setNeedSchema(false)} />}
       <Card title="Tài khoản con đang tham gia" icon="user" color={3}>
         {members.length === 0 ? <p className="m-0 text-[13px] text-muted">Chưa có tài khoản con nào. Tạo mã mời ở khung bên dưới.</p> : (
           <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
@@ -114,7 +118,7 @@ export default function MembersView() {
         </Card>
       )}
 
-      <NewInvite />
+      <NewInvite onSchemaError={() => setNeedSchema(true)} />
 
       <Card title="Bạn là tài khoản con?" icon="user" color={7}>
         <p className="mt-0 mb-3 text-[13px] leading-relaxed text-muted">Nếu tài khoản này mới tạo, chưa có giao dịch hay mục tiêu nào và bạn nhận được mã mời từ người khác, nhập mã tại đây để chuyển sang làm tài khoản con của họ.</p>

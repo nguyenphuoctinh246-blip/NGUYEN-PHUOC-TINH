@@ -33,7 +33,7 @@ export function ConnectForm() {
       <p className="mt-0 mb-3 text-[14px] leading-relaxed text-fg-2">
         Hiện ứng dụng đang ở chế độ <b>lưu trên máy này</b>: điện thoại và máy tính mỗi nơi một dữ liệu riêng. Để cả hai cùng dùng <b>một nguồn dữ liệu</b>, hãy nối với Supabase (miễn phí) rồi dán hai thông tin kết nối vào đây. Không cần cấu hình Vercel hay triển khai lại.
       </p>
-      <ol className="mb-4 flex flex-col gap-1.5 pl-5 text-[13px] leading-relaxed text-fg-2">
+      <ol className="mb-4 flex list-decimal flex-col gap-1.5 pl-5 text-[13px] leading-relaxed text-fg-2">
         <li>Tạo dự án tại <b>supabase.com</b>, mở <b>SQL Editor</b>, dán toàn bộ file <code className="rounded bg-surface-alt px-1.5 py-0.5 font-mono text-xs">schema.sql</code> và bấm <b>Run</b>.</li>
         <li>Vào <b>Project Settings → API</b>, chép <b>Project URL</b> và khóa <b>anon public</b> (hoặc Publishable key).</li>
         <li>Dán vào hai ô dưới đây rồi bấm <b>Kiểm tra và kết nối</b>.</li>

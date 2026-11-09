@@ -23,5 +23,8 @@ NEXT_DIST_DIR=.next-e2e-open npx next start -p 3107 > /tmp/e2e-next2.log 2>&1 &
 sleep 3
 reset_db; node tests/e2e/devices-browser.cjs
 reset_db; node tests/e2e/members-browser.cjs
+reset_db
+pkill -f tests/e2e/mock-supabase || true; sleep 0.5; MOCK_LEGACY=1 node tests/e2e/mock-supabase.cjs > /tmp/mock.log 2>&1 &
+sleep 1; node tests/e2e/schema-help.cjs
 reset_db; node tests/e2e/quick-connect.cjs
 pkill -f tests/e2e/mock-supabase || true; pkill -f "next-server" || true; pkill -f "next start" || true

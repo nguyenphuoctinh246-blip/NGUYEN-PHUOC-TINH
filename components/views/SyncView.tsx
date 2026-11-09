@@ -17,7 +17,7 @@ function Setup() {
       <p className="mt-0 mb-3 text-[14px] leading-relaxed text-fg-2">
         Hiện ứng dụng đang ở chế độ <b>lưu trên máy này</b>. Để đăng nhập và dùng chung dữ liệu trên điện thoại, máy tính bảng và máy tính, cần nối ứng dụng với một cơ sở dữ liệu trực tuyến (Supabase, có gói miễn phí).
       </p>
-      <ol className="m-0 flex flex-col gap-1.5 pl-5 text-[13px] leading-relaxed text-fg-2">
+      <ol className="m-0 flex list-decimal flex-col gap-1.5 pl-5 text-[13px] leading-relaxed text-fg-2">
         <li>Tạo dự án tại supabase.com và chạy file <code className="rounded bg-surface-alt px-1.5 py-0.5 font-mono text-xs">supabase/schema.sql</code> trong SQL Editor.</li>
         <li>Lấy <b>Project URL</b> và <b>anon public key</b> trong Project Settings → API.</li>
         <li>Trên Vercel, thêm hai biến môi trường <code className="rounded bg-surface-alt px-1.5 py-0.5 font-mono text-xs">NEXT_PUBLIC_SUPABASE_URL</code> và <code className="rounded bg-surface-alt px-1.5 py-0.5 font-mono text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>, rồi bấm Redeploy.</li>
