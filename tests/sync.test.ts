@@ -87,7 +87,7 @@ class Device {
   store: Store; info: SyncInfo = { status: "idle", pending: 0, lastSync: null, message: "", realtime: false };
   engine: SyncEngine; client: FakeClient;
   saved: Snapshot | null = null;
-  constructor(public name: string, srv: FakeServer, uid: string, initial: Store) {
+  constructor(public name: string, srv: FakeServer, uid: string, initial: Store, writable?: readonly import("../lib/cloud/map").Table[]) {
     this.store = initial; this.client = new FakeClient(srv);
     const h: Handlers = {
       getStore: () => this.store,
@@ -95,7 +95,7 @@ class Device {
       applyRemote: (c) => { this.store = applyChange(this.store, c); },
       onInfo: (i) => { this.info = i; },
     };
-    this.engine = new SyncEngine(this.client as unknown as SupabaseClient, uid, h, 20, { load: () => this.saved, save: (x) => { this.saved = x; } });
+    this.engine = new SyncEngine(this.client as unknown as SupabaseClient, uid, h, 20, { load: () => this.saved, save: (x) => { this.saved = x; } }, writable);
     this.uid = uid; this.srv = srv;
   }
   uid: string; srv: FakeServer;
@@ -228,6 +228,19 @@ const tx = (id: string, amount: number, extra: Partial<Transaction> = {}): Trans
   await P.engine.pull();
   ok(P.store.tx.find((t) => t.id === "q1")?.amount === 2222, "pull phát hiện cả thay đổi chỉ-sửa (số dòng không đổi)");
   P.engine.stop(); Q.engine.stop();
+
+  console.log("12. Tài khoản con: chỉ ghi được giao dịch, các bảng khác chỉ đọc");
+  const OWN = new Device("OWN", srv, "ws-1", { ...emptyStore(), tx: [tx("w1", 1000)], budgets: { an_uong: 100 } });
+  await OWN.engine.start("merge");
+  const KID = new Device("KID", srv, "ws-1", emptyStore(), ["transactions"]);
+  await KID.engine.start("account");
+  ok(KID.store.tx.some((t) => t.id === "w1") && KID.store.budgets.an_uong === 100, "tài khoản con nhận dữ liệu và ngân sách của chủ");
+  KID.set((st) => ({ ...st, tx: [...st.tx, tx("k-new", 777)], budgets: { an_uong: 1 }, categories: st.categories.map((c) => ({ ...c, label: "HACK" })) }));
+  await wait(150);
+  ok(srv.table("transactions").has("ws-1|k-new"), "giao dịch tài khoản con nhập được đẩy lên kho của chủ");
+  ok([...srv.table("categories").values()].every((r) => r.label !== "HACK"), "tài khoản con KHÔNG đẩy được thay đổi danh mục lên");
+  ok((srv.table("settings").get("ws-1|budgets")?.budgets as Record<string, number>)?.an_uong === 100, "tài khoản con KHÔNG đẩy được thay đổi ngân sách lên");
+  OWN.engine.stop(); KID.engine.stop();
 
   A.engine.stop(); B.engine.stop(); C.engine.stop(); D.engine.stop();
   console.log(failures ? `\n${failures} kiểm thử THẤT BẠI` : "\nTất cả kiểm thử đạt");

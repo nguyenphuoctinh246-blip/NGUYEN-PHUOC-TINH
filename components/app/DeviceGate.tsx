@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button, Field } from "../ui";
 import Icon from "../Icon";
 import { deviceName } from "@/lib/cloud/device";
+import { accountName } from "@/lib/cloud/username";
 import { useApp } from "./AppContext";
 
 /** Màn hình chặn: thiết bị mới đăng nhập phải được xác nhận bằng mã trước khi vào dữ liệu */
@@ -55,7 +56,7 @@ export default function DeviceGate() {
     <>
       <span className="flex size-14 items-center justify-center rounded-2xl bg-warn-soft text-warn"><Icon name="shield" className="size-7" /></span>
       <h2 className="mt-4 mb-1 text-xl font-extrabold tracking-[-0.02em]">Thiết bị này cần được xác nhận</h2>
-      <p className="m-0 text-[14px] leading-relaxed text-fg-2">Vì an toàn, thiết bị mới phải được bạn cho phép trước khi xem và nhập dữ liệu. Tài khoản: <b>{cloud.user?.email}</b></p>
+      <p className="m-0 text-[14px] leading-relaxed text-fg-2">Vì an toàn, thiết bị mới phải được bạn cho phép trước khi xem và nhập dữ liệu. Tài khoản: <b>{accountName(cloud.user)}</b></p>
       <div className="mt-5 w-full rounded-2xl border border-line-light bg-surface px-4 py-5 shadow-card">
         <div className="text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">Mã xác nhận của thiết bị này</div>
         <div aria-label={`Mã xác nhận ${device.code ?? ""}`} className="mt-1.5 font-mono text-5xl font-bold tracking-[0.12em] text-accent tabular-nums">{code}</div>

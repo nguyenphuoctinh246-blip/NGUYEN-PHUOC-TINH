@@ -66,13 +66,16 @@ Mặc định dữ liệu chỉ lưu trên từng trình duyệt. Để nhiều 
 
 5. **Duyệt thiết bị bằng mã:** thiết bị đầu tiên được duyệt tự động và nhận 8 mã khôi phục (hãy lưu lại). Thiết bị mới đăng nhập sẽ hiện mã 6 số và bị chặn cho đến khi một thiết bị đã duyệt nhập mã đó ở Đồng bộ → Thiết bị đã đăng nhập. Việc chặn do chính cơ sở dữ liệu thực hiện (Row Level Security), không chỉ ở giao diện.
 
+6. **Tên đăng nhập (không cần Gmail):** gõ tên như `chu.nha` thay cho email; ứng dụng tự đổi thành địa chỉ nội bộ `chu.nha@chitieu.local` (không gửi email nào). Cần tắt **Confirm email** trong Supabase (Authentication → Sign In / Providers → Email).
+7. **Tài khoản con:** chủ vào mục **Thành viên** → tạo **mã mời** (8 ký tự, dùng một lần, hết hạn sau 7 ngày). Người nhà chọn tab **Có mã mời**, tự đặt tên đăng nhập và mật khẩu. Máy chủ ghi nhận mọi giao dịch kèm người nhập (`created_by`) và thời điểm (`created_at`). Tài khoản con chỉ nhập/sửa/xóa giao dịch của chính mình, đọc được danh mục/ngân sách của chủ; xem được giao dịch của người khác chỉ khi chủ cho phép. Phân quyền do Row Level Security trong `supabase/schema.sql` thực hiện, không chỉ ở giao diện.
+
 Hướng dẫn có hình ảnh: file Word `Huong-dan-dong-bo-nhieu-thiet-bi.docx`.
 
 Kiểm thử:
 
 ```bash
 npm test                        # logic đồng bộ (máy chủ giả lập trong bộ nhớ)
-psql -d <db> -f tests/sql/supabase-stub.sql -f supabase/schema.sql -f tests/sql/devices.test.sql   # RLS + duyệt thiết bị trên Postgres thật
+psql -d <db> -f tests/sql/supabase-stub.sql -f supabase/schema.sql -f tests/sql/devices.test.sql -f tests/sql/members.test.sql   # RLS, duyệt thiết bị, tài khoản con trên Postgres thật
 bash tests/e2e/run.sh           # trình duyệt thật: máy tính + điện thoại + máy tính bảng
 ```
 

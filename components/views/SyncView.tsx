@@ -9,6 +9,7 @@ import DevicesCard from "./DevicesCard";
 import { ConnectForm, ConnectionCheck, ShareCard } from "./ConnectCard";
 import { getCloudConfig, runtimeConfigAllowed } from "@/lib/cloud/config";
 import { deviceName } from "@/lib/cloud/device";
+import { accountName, isEmailLike, normalizeUsername, validateLogin } from "@/lib/cloud/username";
 
 function Setup() {
   return (
@@ -29,51 +30,61 @@ function Setup() {
 
 function AuthCard() {
   const { cloud } = useApp();
-  const [mode, setMode] = useState<"in" | "up">("in");
-  const [email, setEmail] = useState("");
+  const [mode, setMode] = useState<"in" | "up" | "join">("in");
+  const [login, setLogin] = useState("");
   const [pw, setPw] = useState("");
+  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "err" | "ok"; text: string } | null>(null);
+  const asUser = login.trim() && !isEmailLike(login) ? normalizeUsername(login) : "";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
-    if (!email.trim() || !pw) return setMsg({ kind: "err", text: "Vui lòng nhập email và mật khẩu." });
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email.trim())) return setMsg({ kind: "err", text: "Email chưa đúng định dạng (ví dụ ten@gmail.com). Hãy nhập đúng email đã dùng trên máy tính." });
-    if (mode === "up" && pw.length < 6) return setMsg({ kind: "err", text: "Mật khẩu cần tối thiểu 6 ký tự." });
+    const bad = validateLogin(login);
+    if (bad) return setMsg({ kind: "err", text: bad });
+    if (!pw) return setMsg({ kind: "err", text: "Vui lòng nhập mật khẩu." });
+    if (mode !== "in" && pw.length < 6) return setMsg({ kind: "err", text: "Mật khẩu cần tối thiểu 6 ký tự." });
+    if (mode === "join" && code.replace(/[^A-Za-z0-9]/g, "").length < 8) return setMsg({ kind: "err", text: "Nhập đủ mã mời 8 ký tự do chủ tài khoản gửi (dạng ABCD-EFGH)." });
     setBusy(true);
     try {
       if (mode === "in") {
-        const err = await cloud.signIn(email.trim(), pw);
+        const err = await cloud.signIn(login, pw);
         if (err) setMsg({ kind: "err", text: err });
-      } else {
-        const r = await cloud.signUp(email.trim(), pw);
+      } else if (mode === "up") {
+        const r = await cloud.signUp(login, pw);
         if ("error" in r && r.error) setMsg({ kind: "err", text: r.error });
-        else if ("needsConfirm" in r && r.needsConfirm) setMsg({ kind: "ok", text: "Đã gửi email xác nhận. Mở email, bấm vào liên kết xác nhận rồi quay lại đăng nhập." });
+        else if ("needsConfirm" in r && r.needsConfirm) setMsg({ kind: "ok", text: isEmailLike(login) ? "Đã gửi email xác nhận. Mở email, bấm vào liên kết xác nhận rồi quay lại đăng nhập." : "Dự án Supabase đang yêu cầu xác nhận email nên tên đăng nhập chưa dùng được. Vào Supabase → Authentication → Sign In / Providers → Email, tắt Confirm email rồi thử lại." });
+      } else {
+        const r = await cloud.signUpWithInvite(login, pw, code);
+        if ("error" in r && r.error) setMsg({ kind: "err", text: r.error });
       }
     } finally { setBusy(false); }
   }
 
-  const tab = (m: "in" | "up", label: string) => (
+  const tab = (m: "in" | "up" | "join", label: string) => (
     <button type="button" role="tab" aria-selected={mode === m} onClick={() => { setMode(m); setMsg(null); }}
-      className={`flex-1 cursor-pointer rounded-md border-none px-3 py-2 text-[13px] font-semibold ${mode === m ? "bg-surface shadow-card" : "bg-transparent text-muted"}`}>{label}</button>
+      className={`flex-1 cursor-pointer rounded-md border-none px-2 py-2 text-[13px] font-semibold ${mode === m ? "bg-surface shadow-card" : "bg-transparent text-muted"}`}>{label}</button>
   );
   return (
     <Card title="Đăng nhập để đồng bộ" icon="user" color={10} className="mx-auto w-full max-w-md">
-      <p className="mt-0 mb-4 text-[13px] text-muted">Đăng nhập cùng một tài khoản trên mọi thiết bị để nhập và xem chung dữ liệu thu chi.</p>
-      <div className="mb-4 flex gap-1 rounded-lg bg-surface-alt p-[3px]" role="tablist">{tab("in", "Đăng nhập")}{tab("up", "Tạo tài khoản")}</div>
-      {mode === "up" ? (
-        <p className="mt-0 mb-3.5 rounded-lg bg-warn-soft px-3 py-2.5 text-[13px] leading-relaxed text-warn"><b>Chỉ tạo tài khoản MỘT lần</b>, trên thiết bị đầu tiên. Điện thoại và các máy khác phải chọn tab <b>Đăng nhập</b> với đúng email và mật khẩu đó, nếu không mỗi máy sẽ có một kho dữ liệu riêng và không thấy dữ liệu của nhau.</p>
-      ) : (
-        <p className="mt-0 mb-3.5 text-xs leading-relaxed text-muted">Dùng đúng email và mật khẩu đã tạo trên thiết bị đầu tiên. Đăng nhập khác email sẽ ra kho dữ liệu khác.</p>
-      )}
+      <p className="mt-0 mb-4 text-[13px] text-muted">Đăng nhập cùng một tài khoản trên mọi thiết bị để nhập và xem chung dữ liệu thu chi. <b>Không cần Gmail</b>: chỉ cần một tên đăng nhập.</p>
+      <div className="mb-4 flex gap-1 rounded-lg bg-surface-alt p-[3px]" role="tablist">{tab("in", "Đăng nhập")}{tab("up", "Tạo tài khoản")}{tab("join", "Có mã mời")}</div>
+      {mode === "up" && <p className="mt-0 mb-3.5 rounded-lg bg-warn-soft px-3 py-2.5 text-[13px] leading-relaxed text-warn"><b>Chỉ tạo tài khoản MỘT lần</b>, trên thiết bị đầu tiên của chủ. Điện thoại và các máy khác phải chọn tab <b>Đăng nhập</b> với đúng tên đăng nhập đó. Người nhà muốn nhập số liệu riêng thì dùng tab <b>Có mã mời</b>.</p>}
+      {mode === "in" && <p className="mt-0 mb-3.5 text-xs leading-relaxed text-muted">Dùng đúng tên đăng nhập (hoặc email) và mật khẩu đã tạo. Đăng nhập khác tên sẽ ra kho dữ liệu khác.</p>}
+      {mode === "join" && <p className="mt-0 mb-3.5 rounded-lg bg-accent-soft px-3 py-2.5 text-[13px] leading-relaxed text-fg-2">Dành cho <b>tài khoản con</b> (người nhà): nhập mã mời do chủ tài khoản gửi, tự đặt tên đăng nhập và mật khẩu. Số liệu bạn nhập sẽ được máy chủ ghi nhận cho chủ tài khoản.</p>}
       <form onSubmit={submit} className="flex flex-col gap-3.5">
-        <Field label="Email" htmlFor="auth-email"><input id="auth-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-field" placeholder="ten@email.com" /></Field>
-        <Field label="Mật khẩu" htmlFor="auth-pw" hint={mode === "up" ? "Tối thiểu 6 ký tự." : undefined}>
+        {mode === "join" && (
+          <Field label="Mã mời" htmlFor="auth-code"><input id="auth-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} autoComplete="off" maxLength={9} placeholder="ABCD-EFGH" className="input-field text-center font-mono text-lg tracking-[0.2em]" /></Field>
+        )}
+        <Field label="Tên đăng nhập hoặc email" htmlFor="auth-email" hint={mode !== "in" && asUser ? `Tên đăng nhập sẽ là: ${asUser}` : mode !== "in" ? "Ví dụ: be.an (chữ không dấu, số; 3 đến 30 ký tự)" : undefined}>
+          <input id="auth-email" autoComplete="username" autoCapitalize="none" spellCheck={false} value={login} onChange={(e) => setLogin(e.target.value)} className="input-field" placeholder={mode === "in" ? "tên đăng nhập hoặc email" : "ví dụ: be.an"} />
+        </Field>
+        <Field label="Mật khẩu" htmlFor="auth-pw" hint={mode !== "in" ? "Tối thiểu 6 ký tự. Hãy nhớ kỹ: tên đăng nhập không có email để lấy lại mật khẩu." : undefined}>
           <input id="auth-pw" type="password" autoComplete={mode === "in" ? "current-password" : "new-password"} value={pw} onChange={(e) => setPw(e.target.value)} className="input-field" />
         </Field>
         {msg && <p role={msg.kind === "err" ? "alert" : "status"} className={`m-0 rounded-lg px-3 py-2 text-[13px] font-medium ${msg.kind === "err" ? "bg-expense-soft text-expense" : "bg-income-soft text-income"}`}>{msg.text}</p>}
-        <Button variant="primary" type="submit" disabled={busy} className="!py-2.5">{busy ? "Đang xử lý…" : mode === "in" ? "Đăng nhập" : "Tạo tài khoản"}</Button>
+        <Button variant="primary" type="submit" disabled={busy} className="!py-2.5">{busy ? "Đang xử lý…" : mode === "in" ? "Đăng nhập" : mode === "up" ? "Tạo tài khoản" : "Tạo tài khoản con và tham gia"}</Button>
       </form>
       <p className="mt-4 mb-0 text-xs leading-relaxed text-muted">Dữ liệu đang có trên máy này sẽ được hỏi trước khi gộp vào tài khoản. Bạn vẫn dùng được ứng dụng khi chưa đăng nhập.</p>
     </Card>
@@ -99,7 +110,8 @@ function Signed() {
   const diag: [string, string][] = [
     ["Phiên bản ứng dụng", `${process.env.NEXT_PUBLIC_COMMIT ?? "?"} · xây dựng ${process.env.NEXT_PUBLIC_BUILD_TIME ? new Date(process.env.NEXT_PUBLIC_BUILD_TIME).toLocaleString("vi-VN") : "?"}`],
     ["Máy chủ", host],
-    ["Tài khoản", `${user?.email ?? "–"} · mã ${(user?.id ?? "").slice(0, 6)}`],
+    ["Tài khoản", `${accountName(user)} · mã ${(user?.id ?? "").slice(0, 6)}`],
+    ["Vai trò", cloud.workspace ? (cloud.workspace.role === "owner" ? "Chủ tài khoản" : `Tài khoản con "${cloud.workspace.name}"${cloud.workspace.canViewAll ? " (xem tất cả)" : " (chỉ xem phần mình nhập)"}`) : "–"],
     ["Thiết bị", `${deviceName()} · ${cloud.device.legacy ? "chưa bật duyệt thiết bị" : "đã được duyệt"}`],
     ["Cập nhật tức thì", info.realtime ? "Đang hoạt động" : "Chưa hoạt động (vẫn tự đồng bộ mỗi 6 giây)"],
     ["Lần cập nhật cuối", fmtTime(info.lastSync)],
@@ -131,7 +143,7 @@ function Signed() {
         <div className="relative flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="text-[11px] font-semibold tracking-[0.06em] uppercase opacity-80">Đang đăng nhập</div>
-            <div className="mt-1 truncate text-lg font-bold">{user?.email}</div>
+            <div className="mt-1 truncate text-lg font-bold">{accountName(user)}{cloud.workspace?.role === "member" && <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 align-middle text-[11px] font-semibold">Tài khoản con</span>}</div>
             <div className="mt-1 text-xs opacity-85">Cập nhật lần cuối: {fmtTime(info.lastSync)}</div>
           </div>
           <div className="flex flex-wrap gap-2">

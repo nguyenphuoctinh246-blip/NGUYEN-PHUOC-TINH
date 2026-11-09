@@ -55,7 +55,13 @@ export class SyncEngine {
   private info: SyncInfo = { status: "idle", pending: 0, lastSync: null, message: "", realtime: false };
   private lastFp = "";
 
-  constructor(private db: SupabaseClient, private uid: string, private h: Handlers, private debounceMs = 500, private storage?: SnapshotStorage) {}
+  /** Các bảng mà thiết bị này được GHI (tài khoản con chỉ ghi được giao dịch) */
+  private writable: Set<Table>;
+
+  /** uid ở đây là id của KHO DỮ LIỆU (chủ tài khoản), không nhất thiết là id người đăng nhập */
+  constructor(private db: SupabaseClient, private uid: string, private h: Handlers, private debounceMs = 500, private storage?: SnapshotStorage, writable?: readonly Table[]) {
+    this.writable = new Set(writable ?? TABLES);
+  }
 
   private emit(p: Partial<SyncInfo>) {
     this.info = { ...this.info, ...p };
@@ -228,6 +234,7 @@ export class SyncEngine {
     const upserts: { table: Table; rows: Row[]; keys: string[] }[] = [];
     const deletes: { table: Table; ids: string[] }[] = [];
     for (const t of TABLES) {
+      if (!this.writable.has(t)) continue; // bảng chỉ đọc: không bao giờ đẩy lên
       const rows: Row[] = [];
       const keys: string[] = [];
       for (const [id, r] of cur[t]) {

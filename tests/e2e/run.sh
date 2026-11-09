@@ -12,7 +12,7 @@ reset_db() {
   node tests/e2e/mock-supabase.cjs > /tmp/mock.log 2>&1 &
   sleep 1
 }
-pkill -f "next-server" || true; pkill -f "next start" || true
+pkill -f "next-server" || true; pkill -f "next-server" || true; pkill -f "next start" || true
 
 # 1) Ứng dụng có cấu hình Supabase từ biến môi trường (như khi đặt trên Vercel)
 NEXT_DIST_DIR=.next-e2e-env NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=test-anon-key npm run build > /tmp/e2e-build1.log 2>&1
@@ -22,5 +22,6 @@ NEXT_DIST_DIR=.next-e2e-env npx next start -p 3106 > /tmp/e2e-next1.log 2>&1 &
 NEXT_DIST_DIR=.next-e2e-open npx next start -p 3107 > /tmp/e2e-next2.log 2>&1 &
 sleep 3
 reset_db; node tests/e2e/devices-browser.cjs
+reset_db; node tests/e2e/members-browser.cjs
 reset_db; node tests/e2e/quick-connect.cjs
-pkill -f tests/e2e/mock-supabase || true; pkill -f "next start" || true
+pkill -f tests/e2e/mock-supabase || true; pkill -f "next-server" || true; pkill -f "next start" || true

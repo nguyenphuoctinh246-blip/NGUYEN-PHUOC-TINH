@@ -11,6 +11,7 @@ import TxModal from "./TxModal";
 import Overview from "../views/Overview";
 import Categories from "../views/Categories";
 import SyncView from "../views/SyncView";
+import MembersView from "../views/MembersView";
 import SyncPill from "./SyncPill";
 import DeviceGate from "./DeviceGate";
 import RecoveryModal from "./RecoveryModal";
@@ -24,17 +25,22 @@ import DataView from "../views/DataView";
 
 function Shell() {
   const { view, go, s, openTx, txModal, cloud } = useApp();
-  const current = VIEWS.find((v) => v.id === view)!;
+  const isMember = cloud.workspace?.role === "member";
+  const MEMBER_VIEWS = ["tong-quan", "giao-dich", "dong-bo"];
+  /** Tài khoản con chỉ thấy: Tổng quan, Giao dịch, Đồng bộ. Mục Thành viên chỉ hiện khi chủ đã đăng nhập đồng bộ. */
+  const navViews = VIEWS.filter((v) => (isMember ? MEMBER_VIEWS.includes(v.id) : v.id !== "thanh-vien" || !!cloud.user));
+  const shown = navViews.some((v) => v.id === view) ? view : "tong-quan";
+  const current = VIEWS.find((v) => v.id === shown)!;
   const gated = !!cloud.user && cloud.device.status !== "approved";
-  const showPeriod = !gated && view !== "tai-khoan" && view !== "du-lieu" && view !== "muc-tieu" && view !== "danh-muc" && view !== "dong-bo";
+  const showPeriod = !gated && view !== "thanh-vien" && view !== "tai-khoan" && view !== "du-lieu" && view !== "muc-tieu" && view !== "danh-muc" && view !== "dong-bo";
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
       <aside className="sticky top-0 hidden h-screen flex-col bg-side-bg px-3 py-5 text-side-fg lg:flex">
         <div className="px-2 pb-6"><AppLink href="/" aria-label="Trang giới thiệu"><Logo light /></AppLink></div>
         <nav aria-label="Chức năng" className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
-          {VIEWS.map((v) => {
-            const active = v.id === view;
+          {navViews.map((v) => {
+            const active = v.id === shown;
             const c = `color-mix(in srgb, var(--cat-${v.color}) 62%, white)`;
             return (
               <button key={v.id} type="button" onClick={() => go(v.id)} aria-current={active ? "page" : undefined}
@@ -68,8 +74,8 @@ function Shell() {
             </div>
           </div>
           <nav aria-label="Chức năng" className="flex gap-1 overflow-x-auto px-4 pb-2 lg:hidden">
-            {VIEWS.map((v) => {
-              const active = v.id === view;
+            {navViews.map((v) => {
+              const active = v.id === shown;
               return (
                 <button key={v.id} type="button" onClick={() => go(v.id)} aria-current={active ? "page" : undefined}
                   className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-semibold ${active ? "border-accent bg-accent text-white" : "border-line bg-surface text-fg-2"}`}>
@@ -83,6 +89,12 @@ function Shell() {
         <main className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6">
           {!s.ready ? <Skeleton /> : gated ? <DeviceGate /> : (
             <>
+              {cloud.notice && (
+                <div role="alert" className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line-light bg-warn-soft px-3.5 py-2.5 text-[13px] font-medium text-warn">
+                  <span>⚠️ {cloud.notice}</span>
+                  <Button onClick={cloud.dismissNotice} className="!py-1 text-xs">Đã hiểu</Button>
+                </div>
+              )}
               {cloud.pendingDevices.length > 0 && view !== "dong-bo" && (
                 <button type="button" onClick={() => go("dong-bo")} className="mb-5 flex w-full cursor-pointer flex-wrap items-center justify-between gap-2 rounded-lg border border-line-light bg-warn-soft px-3.5 py-2.5 text-left text-[13px] font-medium text-warn">
                   <span>🔐 Có {cloud.pendingDevices.length} thiết bị đang xin vào: {cloud.pendingDevices.map((d) => d.name || "Thiết bị lạ").join(", ")}. Nhập mã để cho phép.</span>
@@ -101,15 +113,16 @@ function Shell() {
                   <Button onClick={s.clearSamples} className="!py-1 text-xs">Xóa dữ liệu mẫu</Button>
                 </div>
               )}
-              {view === "tong-quan" && <Overview />}
-              {view === "giao-dich" && <Transactions />}
-              {view === "ngan-sach" && <Budgets />}
-              {view === "muc-tieu" && <Goals />}
-              {view === "tai-khoan" && <Accounts />}
-              {view === "bao-cao" && <Reports />}
-              {view === "danh-muc" && <Categories />}
-              {view === "dong-bo" && <SyncView />}
-              {view === "du-lieu" && <DataView />}
+              {shown === "tong-quan" && <Overview />}
+              {shown === "giao-dich" && <Transactions />}
+              {shown === "ngan-sach" && <Budgets />}
+              {shown === "muc-tieu" && <Goals />}
+              {shown === "tai-khoan" && <Accounts />}
+              {shown === "bao-cao" && <Reports />}
+              {shown === "danh-muc" && <Categories />}
+              {shown === "thanh-vien" && <MembersView />}
+              {shown === "dong-bo" && <SyncView />}
+              {shown === "du-lieu" && <DataView />}
             </>
           )}
         </main>

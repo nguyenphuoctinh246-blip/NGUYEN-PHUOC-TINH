@@ -12,7 +12,12 @@ type Sort = "new" | "old" | "high" | "low";
 const PAGE = 25;
 
 export default function Transactions() {
-  const { s, period, inView, openTx } = useApp();
+  const { s, period, inView, openTx, cloud } = useApp();
+  const [who, setWho] = useState("all");
+  const showAuthor = cloud.people.length > 1;
+  const isMember = cloud.workspace?.role === "member";
+  /** Tài khoản con chỉ sửa/xóa được giao dịch do chính mình nhập */
+  const canEdit = (t: { createdBy?: string }) => !isMember || !t.createdBy || t.createdBy === cloud.user?.id;
   const [q, setQ] = useState("");
   const [type, setType] = useState<"all" | "income" | "expense">("all");
   const [cat, setCat] = useState("all");
@@ -31,13 +36,14 @@ export default function Transactions() {
       .filter((t) => type === "all" || t.type === type)
       .filter((t) => cat === "all" || t.category === cat)
       .filter((t) => acc === "all" || t.account === acc)
+      .filter((t) => who === "all" || (t.createdBy ?? cloud.user?.id) === who)
       .filter((t) => !k || `${catInfo(t.category).label} ${t.note} ${t.payee} ${t.tags.join(" ")}`.toLowerCase().includes(k))
       .sort((a, b) => sort === "high" ? b.amount - a.amount : sort === "low" ? a.amount - b.amount : sort === "old" ? a.date.localeCompare(b.date) || (a.id > b.id ? 1 : -1) : b.date.localeCompare(a.date) || (b.id > a.id ? 1 : -1));
-  }, [source, q, type, cat, acc, sort]);
+  }, [source, q, type, cat, acc, sort, who, cloud.user?.id]);
 
   const inc = rows.filter((t) => t.type === "income").reduce((a, t) => a + t.amount, 0);
   const exp = rows.filter((t) => t.type === "expense").reduce((a, t) => a + t.amount, 0);
-  const filtersOn = q || type !== "all" || cat !== "all" || acc !== "all";
+  const filtersOn = q || type !== "all" || cat !== "all" || acc !== "all" || who !== "all";
 
   const sel = "input-field !w-auto !py-2 text-[13px]";
   return (
@@ -56,6 +62,12 @@ export default function Transactions() {
             <optgroup label="Chi tiêu">{catList("expense").map((c) => (<option key={c.id} value={c.id}>{c.icon} {c.label}</option>))}</optgroup>
             <optgroup label="Thu nhập">{catList("income").map((c) => (<option key={c.id} value={c.id}>{c.icon} {c.label}</option>))}</optgroup>
           </select>
+          {showAuthor && (
+            <select aria-label="Người nhập" className={sel} value={who} onChange={(e) => setWho(e.target.value)}>
+              <option value="all">Mọi người nhập</option>
+              {cloud.people.map((p) => (<option key={p.id} value={p.id}>{p.id === cloud.user?.id ? "Bạn" : p.name}</option>))}
+            </select>
+          )}
           <select aria-label="Tài khoản" className={sel} value={acc} onChange={(e) => setAcc(e.target.value)}>
             <option value="all">Mọi tài khoản</option>
             {s.accounts.map((a) => (<option key={a.id} value={a.id}>{a.name}</option>))}
@@ -91,7 +103,7 @@ export default function Transactions() {
               const inc = t.type === "income";
               return (
                 <li key={t.id} className="grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 border-b border-line-light px-4 py-3 last:border-b-0 hover:bg-surface-alt md:grid-cols-[96px_minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)_130px_44px]"
-                  onClick={() => openTx(t)}>
+                  onClick={() => { if (canEdit(t)) openTx(t); }}>
                   <span className="flex size-9 items-center justify-center rounded-[10px] text-base md:hidden" style={{ background: tint(catColor(t.category)) }}>{info.icon}</span>
                   <span className="hidden text-[13px] text-fg-2 md:block">{fmtDateFull(t.date)}</span>
                   <span className="min-w-0">
@@ -99,13 +111,13 @@ export default function Transactions() {
                     <span className="block truncate text-[12px] text-muted">
                       <span className="md:hidden">{fmtDateFull(t.date)} · {info.label} · {accName(t.account)}{t.note ? " · " : ""}</span>{t.note}
                     </span>
-                    {t.tags.length > 0 && <span className="mt-1 flex flex-wrap gap-1">{t.tags.map((g) => (<Pill key={g} tone="muted">#{g}</Pill>))}</span>}
+                    {(t.tags.length > 0 || showAuthor) && <span className="mt-1 flex flex-wrap gap-1">{showAuthor && <Pill tone="income">👤 {cloud.authorName(t.createdBy)}</Pill>}{t.tags.map((g) => (<Pill key={g} tone="muted">#{g}</Pill>))}</span>}
                   </span>
                   <span className="hidden min-w-0 items-center gap-2 text-[13px] md:flex"><span className="flex size-7 shrink-0 items-center justify-center rounded-lg text-sm" style={{ background: tint(catColor(t.category)) }}>{info.icon}</span><span className="truncate">{info.label}</span></span>
                   <span className="hidden truncate text-[13px] text-fg-2 md:block">{accName(t.account)}</span>
                   <span className={`text-right font-mono text-[13px] font-semibold ${inc ? "text-income" : "text-expense"}`}>{(inc ? "+" : "-") + fmt(t.amount)}</span>
                   <span className="hidden justify-end md:flex" onClick={(e) => e.stopPropagation()}>
-                    {confirmId === t.id
+                    {!canEdit(t) ? null : confirmId === t.id
                       ? <button type="button" onClick={() => { s.removeTx(t.id); setConfirmId(null); }} onPointerLeave={() => setConfirmId(null)} className="animate-pop cursor-pointer rounded-md border-none bg-expense px-2 py-1 text-[11px] font-semibold text-white">Xóa?</button>
                       : <button type="button" aria-label="Xóa giao dịch" onClick={() => setConfirmId(t.id)} className="flex size-8 cursor-pointer items-center justify-center rounded-lg border-none bg-transparent text-muted hover:bg-expense-soft hover:text-expense"><Icon name="trash" className="size-4" /></button>}
                   </span>

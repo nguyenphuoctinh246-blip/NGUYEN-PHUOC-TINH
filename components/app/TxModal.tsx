@@ -9,7 +9,7 @@ import { Button, Field, Modal } from "../ui";
 import { useApp } from "./AppContext";
 
 export default function TxModal() {
-  const { s, txModal, closeTx } = useApp();
+  const { s, txModal, closeTx, cloud } = useApp();
   const editing = txModal.editing;
   const [type, setType] = useState<TxType>(editing?.type ?? "expense");
   const [digits, setDigits] = useState(editing ? String(editing.amount) : "");
@@ -96,6 +96,9 @@ export default function TxModal() {
           <input id="tx-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Mô tả ngắn..." className="input-field" />
         </Field>
 
+        {editing?.createdAt && (
+          <p className="m-0 rounded-lg bg-surface-alt px-3 py-2 text-xs text-fg-2">Máy chủ ghi nhận: nhập bởi <b>{cloud.authorName(editing.createdBy)}</b> lúc {new Date(editing.createdAt).toLocaleString("vi-VN")}</p>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line-light pt-3.5">
           {editing ? (
             confirmDel ? (

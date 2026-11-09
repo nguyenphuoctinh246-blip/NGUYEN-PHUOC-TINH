@@ -25,11 +25,12 @@ function RankList({ rows, color }: { rows: { label: string; amount: number }[]; 
 }
 
 export default function Reports() {
-  const { s, period, setPeriod, inView } = useApp();
+  const { s, period, setPeriod, inView, cloud } = useApp();
   const exp = inView.filter((t) => t.type === "expense");
   const payees = groupSum(exp, (t) => t.payee || null).slice(0, 8).map((g) => ({ label: g.key, amount: g.amount }));
   const accounts = groupSum(exp, (t) => t.account).map((g) => ({ label: s.accounts.find((a) => a.id === g.key)?.name ?? g.key, amount: g.amount }));
   const tags = groupSum(exp.flatMap((t) => t.tags.map((g) => ({ ...t, note: g }))), (t) => t.note).slice(0, 8).map((g) => ({ label: "#" + g.key, amount: g.amount }));
+  const authors = groupSum(exp, (t) => t.createdBy ?? cloud.user?.id ?? "-").map((g) => ({ label: cloud.authorName(g.key), amount: g.amount }));
   const select = (month: number) => setPeriod({ ...period, month });
 
   return (
@@ -41,6 +42,9 @@ export default function Reports() {
         <BreakdownChart transactions={inView} type="income" />
       </div>
       <BalanceTrend transactions={inView} />
+      {cloud.people.length > 1 && (
+        <Card title="Chi tiêu theo người nhập" icon="user" color={3}><RankList rows={authors} color="var(--cat-3)" /></Card>
+      )}
       <div className="grid gap-4 md:grid-cols-3">
         <Card title="Chi nhiều nhất tại" icon="bank" color={1}><RankList rows={payees} color="var(--cat-1)" /></Card>
         <Card title="Chi theo tài khoản" icon="wallet" color={3}><RankList rows={accounts} color="var(--cat-3)" /></Card>

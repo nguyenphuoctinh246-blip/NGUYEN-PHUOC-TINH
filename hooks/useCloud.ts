@@ -9,6 +9,11 @@ import {
   registerDevice, revokeDevice, useRecoveryCode, type DeviceInfo,
 } from "@/lib/cloud/device";
 import { SyncEngine, type Snapshot, type SyncInfo, type VerifyRow } from "@/lib/cloud/engine";
+import { toLoginEmail } from "@/lib/cloud/username";
+import {
+  createInvite, joinWorkspace, listInvites, myWorkspace, removeMember, revokeInvite, updateMember, workspacePeople,
+  type Invite, type Person, type Workspace,
+} from "@/lib/cloud/workspace";
 import type { StoreApi } from "./useStore";
 
 const LINK_KEY = "vn_cloud_uid";
@@ -21,8 +26,8 @@ const errMsg = (e: unknown) => (e instanceof Error ? e.message : (e as { message
 
 export function viAuthError(msg: string): string {
   const m = msg.toLowerCase();
-  if (m.includes("invalid login")) return "Sai email hoặc mật khẩu.";
-  if (m.includes("already registered") || m.includes("already been registered")) return "Email này đã được đăng ký. Hãy chuyển sang Đăng nhập.";
+  if (m.includes("invalid login")) return "Sai tên đăng nhập (hoặc email) hoặc mật khẩu.";
+  if (m.includes("already registered") || m.includes("already been registered")) return "Tên đăng nhập (hoặc email) này đã có người dùng. Hãy chọn tên khác, hoặc chuyển sang tab Đăng nhập nếu đó là của bạn.";
   if (m.includes("at least") && m.includes("password")) return "Mật khẩu cần tối thiểu 6 ký tự.";
   if (m.includes("not confirmed")) return "Email chưa được xác nhận. Hãy mở email xác nhận rồi đăng nhập lại.";
   if (m.includes("invalid") && m.includes("email")) return "Email không hợp lệ.";
@@ -52,6 +57,13 @@ export function useCloud(s: StoreApi) {
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [recovery, setRecovery] = useState<string[] | null>(null);
   const [nonce, setNonce] = useState(0);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [people, setPeople] = useState<Person[]>([]);
+  const [invites, setInvites] = useState<Invite[]>([]);
+  /** Thông báo cần giữ lại sau khi form đăng nhập biến mất (ví dụ tạo tài khoản được nhưng mã mời sai) */
+  const [notice, setNotice] = useState("");
+  /** Đang tạo tài khoản bằng mã mời: chờ tham gia kho xong rồi mới bắt đầu đồng bộ */
+  const joinGate = useRef<Promise<void>>(Promise.resolve());
   const engine = useRef<SyncEngine | null>(null);
   const sRef = useRef(s);
   sRef.current = s;
@@ -95,7 +107,13 @@ export function useCloud(s: StoreApi) {
     const cleanups: (() => void)[] = [];
 
     const startSync = async () => {
-      const eng = new SyncEngine(db, uid, {
+      let ws: Workspace;
+      try { ws = await myWorkspace(db, uid); } catch (e) { if (!cancelled) setInfo({ ...IDLE, status: "error", message: errMsg(e) }); return; }
+      if (cancelled) return;
+      setWorkspace(ws);
+      const isMember = ws.role === "member";
+      const linkKey = ws.workspaceId === uid ? uid : `${uid}:${ws.workspaceId}`;
+      const eng = new SyncEngine(db, ws.workspaceId, {
         getStore: () => sRef.current.getStore(),
         replaceStore: (st) => sRef.current.replaceAll(st),
         applyRemote: (c) => sRef.current.applyRemote(c),
@@ -103,19 +121,20 @@ export function useCloud(s: StoreApi) {
       }, 500, {
         load: () => { try { const r = localStorage.getItem(SNAP_KEY + uid); return r ? (JSON.parse(r) as Snapshot) : null; } catch { return null; } },
         save: (snap) => { try { localStorage.setItem(SNAP_KEY + uid, JSON.stringify(snap)); } catch { /* bỏ qua */ } },
-      });
+      }, isMember ? ["transactions"] : undefined);
       engine.current = eng;
       cleanups.push(() => { eng.stop(); engine.current = null; });
       try {
         const localTx = sRef.current.getStore().tx.filter((t) => !t.isSample).length;
-        if (readLink() === uid) await eng.start("resume");
+        if (readLink() === linkKey) await eng.start("resume");
+        else if (isMember) await eng.start("account"); // tài khoản con luôn lấy dữ liệu từ kho của chủ
         else if (localTx > 0) {
           const { tx: remoteTx } = await eng.remoteCounts();
           if (cancelled) return;
           if (remoteTx > 0) { setChoice({ localTx, remoteTx }); return; }
           await eng.start("merge");
         } else await eng.start("account");
-        writeLink(uid);
+        writeLink(linkKey);
       } catch (e) {
         if (!cancelled) setInfo({ ...IDLE, status: "error", message: errMsg(e) });
         return;
@@ -127,6 +146,15 @@ export function useCloud(s: StoreApi) {
         if (document.visibilityState !== "visible") return;
         try {
           const m = await myDevice(db);
+          // Bị gỡ khỏi kho dữ liệu của chủ (hoặc đổi kho): xóa dữ liệu trên máy và bắt đầu lại
+          const w = m.status === "approved" ? await myWorkspace(db, uid).catch(() => ws) : ws;
+          if (m.status === "approved" && (w.workspaceId !== ws.workspaceId || w.role !== ws.role) && !cancelled) {
+            writeLink(null);
+            try { localStorage.removeItem(SNAP_KEY + uid); } catch { /* bỏ qua */ }
+            sRef.current.resetLocal();
+            setNonce((n) => n + 1);
+            return;
+          }
           if (m.status !== "approved" && !cancelled) {
             writeLink(null);
             try { localStorage.removeItem(SNAP_KEY + uid); } catch { /* bỏ qua */ }
@@ -148,6 +176,8 @@ export function useCloud(s: StoreApi) {
     (async () => {
       try {
         deviceIdentity();
+        await joinGate.current;
+        if (cancelled) return;
         const r = await registerDevice(db);
         if (cancelled) return;
         if (r.kind === "legacy") { setDevice({ status: "approved", legacy: true }); await startSync(); return; }
@@ -175,17 +205,25 @@ export function useCloud(s: StoreApi) {
       }
     })();
 
-    return () => { cancelled = true; if (pollTimer) clearInterval(pollTimer); cleanups.forEach((f) => f()); setInfo(IDLE); setDevices([]); setDevice({ status: "checking" }); };
+    return () => { cancelled = true; if (pollTimer) clearInterval(pollTimer); cleanups.forEach((f) => f()); setInfo(IDLE); setDevices([]); setWorkspace(null); setPeople([]); setInvites([]); setDevice({ status: "checking" }); };
   }, [uid, s.ready, nonce]);
 
   // Thiết bị đã duyệt: định kỳ xem có yêu cầu mới không
   const approved = device.status === "approved" && !device.legacy;
+  const isOwner = workspace?.role === "owner";
+  const refreshPeople = useCallback(async () => {
+    const db = getCloud();
+    if (!db) return;
+    try { setPeople(await workspacePeople(db)); } catch { /* chưa có tính năng hoặc mạng lỗi */ }
+    if (isOwner) { try { setInvites(await listInvites(db)); } catch { /* bỏ qua */ } }
+  }, [isOwner]);
   useEffect(() => {
     if (!approved) return;
     void refreshDevices();
-    const iv = setInterval(() => { if (document.visibilityState === "visible") void refreshDevices(); }, 8000);
+    const iv = setInterval(() => { if (document.visibilityState === "visible") { void refreshDevices(); void refreshPeople(); } }, 8000);
     return () => clearInterval(iv);
-  }, [approved, refreshDevices]);
+  }, [approved, refreshDevices, refreshPeople]);
+  useEffect(() => { if (approved && workspace) void refreshPeople(); }, [approved, workspace, refreshPeople]);
 
   // Thay đổi dữ liệu trên máy: báo cho engine
   useEffect(() => { engine.current?.notify(); }, [s.tx, s.accounts, s.budgets, s.goals, s.categories]);
@@ -196,17 +234,33 @@ export function useCloud(s: StoreApi) {
     try { await engine.current.start(mode); writeLink(uid); } catch (e) { setInfo({ ...IDLE, status: "error", message: errMsg(e) }); }
   }, [uid]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (login: string, password: string) => {
     const db = getCloud(); if (!db) return "Chưa cấu hình đồng bộ.";
-    const { error } = await db.auth.signInWithPassword({ email, password });
+    const { error } = await db.auth.signInWithPassword({ email: toLoginEmail(login), password });
     return error ? viAuthError(error.message) : null;
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string) => {
+  const signUp = useCallback(async (login: string, password: string) => {
     const db = getCloud(); if (!db) return { error: "Chưa cấu hình đồng bộ." };
-    const { data, error } = await db.auth.signUp({ email, password });
+    const { data, error } = await db.auth.signUp({ email: toLoginEmail(login), password });
     if (error) return { error: viAuthError(error.message) };
     return { needsConfirm: !data.session };
+  }, []);
+
+  /** Tạo tài khoản con: đăng ký tên đăng nhập rồi nhập mã mời để vào kho dữ liệu của chủ */
+  const signUpWithInvite = useCallback(async (login: string, password: string, code: string) => {
+    const db = getCloud(); if (!db) return { error: "Chưa cấu hình đồng bộ." };
+    let release: () => void = () => {};
+    joinGate.current = new Promise<void>((r) => { release = r; });
+    try {
+      const { data, error } = await db.auth.signUp({ email: toLoginEmail(login), password });
+      if (error) return { error: viAuthError(error.message) };
+      if (!data.session) return { error: "Dự án Supabase đang yêu cầu xác nhận email nên không dùng được tên đăng nhập. Hãy tắt Confirm email (Authentication → Sign In / Providers → Email)." };
+      try { await joinWorkspace(db, code); }
+      catch (e) { const m = `Đã tạo tài khoản nhưng chưa tham gia được: ${errMsg(e)} Bạn có thể nhập lại mã mời ở mục Thành viên.`; setNotice(m); return { error: m, createdOnly: true }; }
+      writeLink(null);
+      return { joined: true };
+    } finally { release(); joinGate.current = Promise.resolve(); }
   }, []);
 
   /** forget = true: quên thiết bị này, lần sau đăng nhập phải được duyệt lại */
@@ -243,6 +297,31 @@ export function useCloud(s: StoreApi) {
     return r;
   }, []);
   const dismissRecovery = useCallback(() => setRecovery(null), []);
+
+  // ----- Tài khoản con (thành viên) -----
+  const makeInvite = useCallback(async (name: string, viewAll: boolean) => {
+    const db = getCloud(); if (!db) throw new Error("Chưa cấu hình đồng bộ.");
+    const r = await createInvite(db, name, viewAll);
+    await refreshPeople();
+    return r;
+  }, [refreshPeople]);
+  const dropInvite = useCallback(async (id: string) => { const db = getCloud(); if (!db) return; await revokeInvite(db, id); await refreshPeople(); }, [refreshPeople]);
+  const editMember = useCallback(async (id: string, viewAll: boolean | null, name: string | null) => { const db = getCloud(); if (!db) return; await updateMember(db, id, viewAll, name); await refreshPeople(); }, [refreshPeople]);
+  const dropMember = useCallback(async (id: string) => { const db = getCloud(); if (!db) return; await removeMember(db, id); await refreshPeople(); }, [refreshPeople]);
+  /** Nhập mã mời khi đã có tài khoản (chưa có dữ liệu riêng): chuyển sang làm tài khoản con của kho đó */
+  const joinWithCode = useCallback(async (code: string) => {
+    const db = getCloud(); if (!db) throw new Error("Chưa cấu hình đồng bộ.");
+    await joinWorkspace(db, code);
+    writeLink(null);
+    try { if (uid) localStorage.removeItem(SNAP_KEY + uid); } catch { /* bỏ qua */ }
+    sRef.current.resetLocal();
+    setNonce((n) => n + 1);
+  }, [uid]);
+  /** Tên người nhập một giao dịch ("Bạn", tên tài khoản con, hoặc "Chủ tài khoản") */
+  const authorName = useCallback((createdBy?: string) => {
+    if (!createdBy || createdBy === uid) return "Bạn";
+    return people.find((p) => p.id === createdBy)?.name ?? "Thành viên";
+  }, [people, uid]);
   const acceptConnect = useCallback(async () => {
     if (!pendingConnect) return;
     try { await getCloud()?.auth.signOut(); } catch { /* bỏ qua */ }
@@ -254,9 +333,10 @@ export function useCloud(s: StoreApi) {
 
   return {
     configured, configSource: cfg?.source ?? null, authReady, makeShareLink: () => (cfg ? shareLink(cfg) : ""), user: session?.user ?? null, info, choice, resolveChoice,
-    signIn, signUp, signOut, syncNow, verify, reload,
+    signIn, signUp, signUpWithInvite, signOut, syncNow, verify, reload,
     device, devices, pendingDevices: devices.filter((d) => d.status === "pending"), refreshDevices,
     pendingConnect, acceptConnect, declineConnect,
+    notice, dismissNotice: () => setNotice(""), workspace, people, invites, authorName, makeInvite, dropInvite, editMember, dropMember, joinWithCode, refreshPeople,
     approve, deny, revoke, recovery, newRecoveryCodes, dismissRecovery, submitRecovery,
   };
 }

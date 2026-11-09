@@ -46,7 +46,7 @@ async function until(fn, ms = 20000, step = 400) { const t = Date.now(); while (
   console.log('2. Điện thoại: đăng nhập cùng email nhưng bị chặn, phải chờ xác nhận');
   await goto(P, 'dong-bo');
   await P.fill('#auth-email', 'chu@email.com'); await P.fill('#auth-pw', 'sai-mat-khau'); await P.click('form button[type=submit]'); await sleep(800);
-  ok((await body(P)).includes('Sai email hoặc mật khẩu'), 'sai mật khẩu bị từ chối');
+  ok((await body(P)).includes('Sai tên đăng nhập (hoặc email) hoặc mật khẩu'), 'sai mật khẩu bị từ chối');
   await P.fill('#auth-pw', 'matkhau123'); await P.click('form button[type=submit]');
   ok(await until(async () => (await P.locator('h2:has-text("Thiết bị này cần được xác nhận")').count()) > 0, 15000), 'điện thoại bị chặn bởi màn hình xác nhận');
   const code = (await P.locator('[aria-label^="Mã xác nhận"]').first().innerText()).replace(/\D/g, '');

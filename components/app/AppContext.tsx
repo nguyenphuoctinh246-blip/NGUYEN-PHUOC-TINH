@@ -15,6 +15,7 @@ export const VIEWS = [
   { id: "tai-khoan", label: "Tài khoản", icon: "bank", color: 9 },
   { id: "bao-cao", label: "Báo cáo", icon: "chart", color: 5 },
   { id: "danh-muc", label: "Danh mục", icon: "tag", color: 2 },
+  { id: "thanh-vien", label: "Thành viên", icon: "user", color: 3 },
   { id: "dong-bo", label: "Đồng bộ", icon: "cloud", color: 10 },
   { id: "du-lieu", label: "Dữ liệu", icon: "database", color: 12 },
 ] as const satisfies readonly { id: string; label: string; icon: IconName; color: number }[];

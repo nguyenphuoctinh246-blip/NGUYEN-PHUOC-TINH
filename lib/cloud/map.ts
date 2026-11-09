@@ -29,6 +29,8 @@ export const fromRow = {
     id: str(r.id), type: r.type === "income" ? "income" : "expense", amount: num(r.amount), category: str(r.category),
     date: str(r.date).slice(0, 10), note: str(r.note), account: str(r.account), payee: str(r.payee),
     tags: Array.isArray(r.tags) ? r.tags.map(String) : [],
+    createdBy: typeof r.created_by === "string" ? r.created_by : undefined,
+    createdAt: typeof r.created_at === "string" ? r.created_at : undefined,
   }),
   accounts: (r: Row): Account => ({ id: str(r.id), name: str(r.name), kind: str(r.kind, "cash") as Account["kind"], opening: num(r.opening) }),
   goals: (r: Row): Goal => ({ id: str(r.id), name: str(r.name), target: num(r.target), saved: num(r.saved), deadline: str(r.deadline) }),

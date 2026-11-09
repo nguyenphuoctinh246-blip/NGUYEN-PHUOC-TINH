@@ -12,6 +12,10 @@ export interface Transaction {
   /** nơi chi tiêu hoặc nguồn thu (cửa hàng, công ty…) */
   payee: string;
   tags: string[];
+  /** id người nhập (do máy chủ ghi nhận); trống nếu giao dịch mới tạo trên máy chưa đồng bộ */
+  createdBy?: string;
+  /** thời điểm máy chủ ghi nhận */
+  createdAt?: string;
   isSample?: boolean;
 }
 

@@ -11,7 +11,8 @@ const users = new Map();
 const tokens = new Map();
 const log = [];
 const TABLES = new Set(['transactions', 'accounts', 'goals', 'categories', 'settings']);
-const FUNCS = new Set(['register_device', 'my_device', 'list_devices', 'approve_device', 'deny_device', 'revoke_device', 'create_recovery_codes', 'use_recovery_code']);
+const FUNCS = new Set(['register_device', 'my_device', 'list_devices', 'approve_device', 'deny_device', 'revoke_device', 'create_recovery_codes', 'use_recovery_code',
+  'my_workspace', 'workspace_people', 'create_invite', 'list_invites', 'revoke_invite', 'join_workspace', 'update_member', 'remove_member']);
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
 
 function session(u) {
@@ -121,10 +122,13 @@ http.createServer((req, res) => {
         if (req.method === 'POST') {
           const arr = Array.isArray(j) ? j : [j];
           if (!arr.length) return send(201);
-          const cols = Object.keys(arr[0]).filter((c) => !['user_id', 'id'].includes(c));
-          if (!cols.every((c) => /^\w+$/.test(c))) throw new Error('bad col');
+          const allCols = Object.keys(arr[0]);
+          const cols = allCols.filter((c) => !['user_id', 'id'].includes(c));
+          if (!allCols.every((c) => /^\w+$/.test(c))) throw new Error('bad col');
+          const list = allCols.map((c) => `"${c}"`).join(', ');
           const sets = cols.map((c) => `"${c}" = excluded."${c}"`).join(', ');
-          await asUser(claims, (c) => c.query(`insert into public.${t} select * from json_populate_recordset(null::public.${t}, $1) on conflict (user_id, id) do update set ${sets}`, [JSON.stringify(arr)]));
+          // như PostgREST: chỉ liệt kê các cột được gửi, để cột còn lại dùng giá trị mặc định (ví dụ created_by)
+          await asUser(claims, (c) => c.query(`insert into public.${t} (${list}) select ${list} from json_populate_recordset(null::public.${t}, $1) on conflict (user_id, id) do update set ${sets}`, [JSON.stringify(arr)]));
           return send(201);
         }
         if (req.method === 'DELETE') {
